@@ -1,5 +1,5 @@
 # Swaps: Example DAML Application
-[![CircleCI](https://circleci.com/gh/DACH-NY/ex-cdm-swaps.svg?style=svg&circle-token=770cc8e608a1260764040bacfe5e6c4031f4b5ea)](https://circleci.com/gh/DACH-NY/ex-cdm-swaps)
+[![CircleCI](https://circleci.com/gh/digital-asset/ex-cdm-swaps.svg?style=svg)](https://circleci.com/gh/digital-asset/ex-cdm-swaps)
 
 > Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved. SPDX-License-Identifier: Apache-2.0
 
