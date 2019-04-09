@@ -1,0 +1,18 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Types where
+
+import Prelude as Daml hiding (id)
+
+data ContractIdData a = ContractIdData
+  with
+    dCid : ContractId a
+    d    : a
+
+data PartyWithId = PartyWithId
+  with
+    p  : Daml.Party
+    id : Text
+  deriving (Eq, Show)

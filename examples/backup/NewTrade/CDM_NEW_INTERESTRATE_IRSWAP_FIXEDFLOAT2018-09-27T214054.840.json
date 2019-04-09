@@ -1,0 +1,327 @@
+{
+  "choice": "ProposeNewTrade",
+  "argument": {
+    "ps": [{
+      "id": "4305743651100",
+      "p": "DEALER-D01"
+    }, {
+      "id": "5264151754007",
+      "p": "CCP-P01"
+    }],
+    "base": {
+      "timestamp": [{
+        "qualification": "eventCreationDateTime",
+        "dateTime": "2018-09-27T21:40:54.84+00:00[UTC]"
+      }],
+      "rosettaKey": "52c80049",
+      "eventDate": "2018-09-27",
+      "primitive": {
+
+      },
+      "eventIdentifier": [{
+        "issuerReference": {
+          "reference": "UNKNOWN"
+        },
+        "assignedIdentifier": [{
+          "version": 1,
+          "identifier": {
+            "value": "U7VRJNROZ0"
+          }
+        }]
+      }],
+      "action": "New"
+    },
+    "after": {
+      "contract": {
+        "contractIdentifier": [{
+          "issuerReference": {
+            "reference": "4305743651100"
+          },
+          "assignedIdentifier": [{
+            "version": 1,
+            "identifier": {
+              "value": "RLDGJAIZTY"
+            }
+          }]
+        }, {
+          "issuerReference": {
+            "reference": "5264151754007"
+          },
+          "assignedIdentifier": [{
+            "version": 1,
+            "identifier": {
+              "value": "RLDGJAIZTY"
+            }
+          }]
+        }],
+        "tradeDate": {
+          "date": "2018-09-27"
+        },
+        "rosettaKey": "da4a0382",
+        "party": [{
+          "id": "4305743651100",
+          "name": {
+            "value": "DEALER-D01"
+          },
+          "partyId": [{
+            "value": "4305743651100"
+          }],
+          "account": {
+            "accountNumber": {
+              "value": "D01588595052"
+            }
+          }
+        }, {
+          "id": "5264151754007",
+          "name": {
+            "value": "CCP-P01"
+          },
+          "partyId": [{
+            "value": "5264151754007"
+          }],
+          "account": {
+            "accountNumber": {
+              "value": "P01547927812"
+            }
+          }
+        }],
+        "contractualProduct": {
+          "productIdentification": {
+            "primaryAssetClass": {
+              "value": "InterestRate"
+            },
+            "productQualifier": "InterestRate_IRSwap_FixedFloat"
+          },
+          "economicTerms": {
+            "rosettaKeyValue": "1d3826fc",
+            "payout": {
+              "interestRatePayout": [{
+                "quantity": {
+                  "notionalSchedule": {
+                    "notionalStepSchedule": {
+                      "initialValue": 600000000.00,
+                      "currency": {
+                        "value": "EUR"
+                      }
+                    }
+                  }
+                },
+                "paymentDates": {
+                  "calculationPeriodDatesReference": {
+                    "reference": "floatingCalcPeriodDates"
+                  },
+                  "payRelativeTo": "CalculationPeriodEndDate",
+                  "paymentDatesAdjustments": {
+                    "businessCenters": {
+                      "businessCenter": [{
+                        "value": "EUTA"
+                      }]
+                    },
+                    "businessDayConvention": "FOLLOWING"
+                  },
+                  "paymentFrequency": {
+                    "period": "M",
+                    "periodMultiplier": 6
+                  }
+                },
+                "rosettaKey": "a7e9b5db",
+                "dayCountFraction": {
+                  "value": "_30_360"
+                },
+                "rateSpecification": {
+                  "floatingRate": {
+                    "floatingRateIndex": {
+                      "value": "EUR_EURIBOR_Reuters"
+                    },
+                    "indexTenor": {
+                      "period": "M",
+                      "periodMultiplier": 6
+                    },
+                    "spreadSchedule": [{
+                      "initialValue": 0.003000
+                    }],
+                    "initialRate": 0.029830
+                  }
+                },
+                "calculationPeriodDates": {
+                  "calculationPeriodDatesAdjustments": {
+                    "businessCenters": {
+                      "businessCenter": [{
+                        "value": "EUTA"
+                      }]
+                    },
+                    "businessDayConvention": "FOLLOWING"
+                  },
+                  "id": "floatingCalcPeriodDates",
+                  "calculationPeriodFrequency": {
+                    "period": "M",
+                    "periodMultiplier": 6,
+                    "rollConvention": "_1"
+                  },
+                  "terminationDate": {
+                    "adjustableDate": {
+                      "dateAdjustments": {
+                        "businessCenters": {
+                          "businessCenter": [{
+                            "value": "EUTA"
+                          }]
+                        },
+                        "businessDayConvention": "FOLLOWING"
+                      },
+                      "unadjustedDate": "2020-10-01"
+                    }
+                  },
+                  "effectiveDate": {
+                    "adjustableDate": {
+                      "dateAdjustments": {
+                        "businessCenters": {
+                          "businessCenter": [{
+                            "value": "EUTA"
+                          }]
+                        },
+                        "businessDayConvention": "FOLLOWING"
+                      },
+                      "unadjustedDate": "2018-09-29",
+                      "adjustedDate": {
+                        "value": "2018-10-01"
+                      }
+                    }
+                  }
+                },
+                "resetDates": {
+                  "fixingDates": {
+                    "businessCenters": {
+                      "businessCenter": [{
+                        "value": "EUTA"
+                      }]
+                    },
+                    "periodMultiplier": -2,
+                    "dayType": "Business",
+                    "businessDayConvention": "NONE",
+                    "period": "D"
+                  },
+                  "resetFrequency": {
+                    "period": "M",
+                    "periodMultiplier": 6
+                  },
+                  "id": "resetDates",
+                  "calculationPeriodDatesReference": {
+                    "reference": "floatingCalcPeriodDates"
+                  },
+                  "resetRelativeTo": "CalculationPeriodStartDate",
+                  "resetDatesAdjustments": {
+                    "businessCenters": {
+                      "businessCenter": [{
+                        "value": "EUTA"
+                      }]
+                    },
+                    "businessDayConvention": "FOLLOWING"
+                  }
+                },
+                "payerReceiver": {
+                  "payerPartyReference": {
+                    "reference": "4305743651100"
+                  },
+                  "receiverPartyReference": {
+                    "reference": "5264151754007"
+                  }
+                }
+              }, {
+                "quantity": {
+                  "notionalSchedule": {
+                    "notionalStepSchedule": {
+                      "initialValue": 600000000.00,
+                      "currency": {
+                        "value": "EUR"
+                      }
+                    }
+                  }
+                },
+                "paymentDates": {
+                  "calculationPeriodDatesReference": {
+                    "reference": "fixedCalcPeriodDates"
+                  },
+                  "payRelativeTo": "CalculationPeriodEndDate",
+                  "paymentDatesAdjustments": {
+                    "businessCenters": {
+                      "businessCenter": [{
+                        "value": "EUTA"
+                      }]
+                    },
+                    "businessDayConvention": "FOLLOWING"
+                  },
+                  "paymentFrequency": {
+                    "period": "Y",
+                    "periodMultiplier": 1
+                  }
+                },
+                "rosettaKey": "37ff53a9",
+                "dayCountFraction": {
+                  "value": "_30_360"
+                },
+                "rateSpecification": {
+                  "fixedRate": {
+                    "initialValue": 0.014268
+                  }
+                },
+                "calculationPeriodDates": {
+                  "calculationPeriodDatesAdjustments": {
+                    "businessCenters": {
+                      "businessCenter": [{
+                        "value": "EUTA"
+                      }]
+                    },
+                    "businessDayConvention": "FOLLOWING"
+                  },
+                  "id": "fixedCalcPeriodDates",
+                  "calculationPeriodFrequency": {
+                    "period": "Y",
+                    "periodMultiplier": 1,
+                    "rollConvention": "_1"
+                  },
+                  "terminationDate": {
+                    "adjustableDate": {
+                      "dateAdjustments": {
+                        "businessCenters": {
+                          "businessCenter": [{
+                            "value": "EUTA"
+                          }]
+                        },
+                        "businessDayConvention": "FOLLOWING"
+                      },
+                      "unadjustedDate": "2020-10-01"
+                    }
+                  },
+                  "effectiveDate": {
+                    "adjustableDate": {
+                      "dateAdjustments": {
+                        "businessCenters": {
+                          "businessCenter": [{
+                            "value": "EUTA"
+                          }]
+                        },
+                        "businessDayConvention": "FOLLOWING"
+                      },
+                      "unadjustedDate": "2018-09-29",
+                      "adjustedDate": {
+                        "value": "2018-10-01"
+                      }
+                    }
+                  }
+                },
+                "payerReceiver": {
+                  "payerPartyReference": {
+                    "reference": "5264151754007"
+                  },
+                  "receiverPartyReference": {
+                    "reference": "4305743651100"
+                  }
+                }
+              }]
+            }
+          }
+        }
+      }
+    }
+  }
+}

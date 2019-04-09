@@ -1,0 +1,197 @@
+{
+  "choice": "ProposeNewTrade",
+  "argument": {
+    "ps": [{
+      "id": "5828082809415",
+      "p": "DEALER-D02"
+    }, {
+      "id": "5264151754007",
+      "p": "CCP-P01"
+    }],
+    "base": {
+      "timestamp": [{
+        "qualification": "eventCreationDateTime",
+        "dateTime": "2018-10-16T21:40:56.662+00:00[UTC]"
+      }],
+      "rosettaKey": "2c3aac67",
+      "eventDate": "2018-10-16",
+      "primitive": {
+
+      },
+      "eventIdentifier": [{
+        "issuerReference": {
+          "reference": "UNKNOWN"
+        },
+        "assignedIdentifier": [{
+          "version": 1,
+          "identifier": {
+            "value": "QQNC4TYWXD"
+          }
+        }]
+      }],
+      "action": "New"
+    },
+    "after": {
+      "contract": {
+        "contractIdentifier": [{
+          "issuerReference": {
+            "reference": "5828082809415"
+          },
+          "assignedIdentifier": [{
+            "version": 1,
+            "identifier": {
+              "value": "ZFRHWU2DII"
+            }
+          }]
+        }, {
+          "issuerReference": {
+            "reference": "5264151754007"
+          },
+          "assignedIdentifier": [{
+            "version": 1,
+            "identifier": {
+              "value": "ZFRHWU2DII"
+            }
+          }]
+        }],
+        "tradeDate": {
+          "date": "2018-10-16"
+        },
+        "rosettaKey": "881fa1e9",
+        "party": [{
+          "id": "5828082809415",
+          "name": {
+            "value": "DEALER-D02"
+          },
+          "partyId": [{
+            "value": "5828082809415"
+          }],
+          "account": {
+            "accountNumber": {
+              "value": "D02024214214"
+            }
+          }
+        }, {
+          "id": "5264151754007",
+          "name": {
+            "value": "CCP-P01"
+          },
+          "partyId": [{
+            "value": "5264151754007"
+          }],
+          "account": {
+            "accountNumber": {
+              "value": "P01547927812"
+            }
+          }
+        }],
+        "contractualProduct": {
+          "productIdentification": {
+            "primaryAssetClass": {
+              "value": "Credit"
+            },
+            "productQualifier": "Credit_Default_Swap_Index"
+          },
+          "economicTerms": {
+            "rosettaKeyValue": "d6266ebd",
+            "payout": {
+              "creditDefaultPayout": {
+                "protectionTerms": [{
+                  "notionalAmount": {
+                    "amount": 30000000,
+                    "currency": {
+                      "value": "USD"
+                    }
+                  }
+                }],
+                "rosettaKey": "87821188",
+                "generalTerms": {
+                  "dateAdjustments": {
+                    "businessCenters": {
+                      "businessCenter": [{
+                        "value": "USNY"
+                      }]
+                    },
+                    "businessDayConvention": "FOLLOWING"
+                  },
+                  "indexReferenceInformation": {
+                    "indexName": {
+                      "value": "CDX.NA.IG"
+                    },
+                    "indexSeries": 30
+                  },
+                  "buyerSeller": {
+                    "buyerPartyReference": {
+                      "reference": "5828082809415"
+                    },
+                    "sellerPartyReference": {
+                      "reference": "5264151754007"
+                    }
+                  }
+                }
+              },
+              "interestRatePayout": [{
+                "quantity": {
+                  "notionalSchedule": {
+                    "notionalStepSchedule": {
+                      "initialValue": 30000000,
+                      "currency": {
+                        "value": "USD"
+                      }
+                    }
+                  }
+                },
+                "rosettaKey": "f6d08c35",
+                "dayCountFraction": {
+                  "value": "ACT_360"
+                },
+                "rateSpecification": {
+                  "fixedRate": {
+                    "initialValue": 0.010000
+                  }
+                },
+                "calculationPeriodDates": {
+                  "effectiveDate": {
+                    "adjustableDate": {
+                      "unadjustedDate": "2018-10-18"
+                    }
+                  },
+                  "terminationDate": {
+                    "adjustableDate": {
+                      "unadjustedDate": "2020-12-20"
+                    }
+                  }
+                },
+                "payerReceiver": {
+                  "payerPartyReference": {
+                    "reference": "5828082809415"
+                  },
+                  "receiverPartyReference": {
+                    "reference": "5264151754007"
+                  }
+                }
+              }],
+              "cashflow": [{
+                "cashflowAmount": {
+                  "amount": 90000,
+                  "currency": {
+                    "value": "USD"
+                  }
+                },
+                "rosettaKey": "TBA",
+                "payerReceiver": {
+                  "payerPartyReference": {
+                    "reference": "5828082809415"
+                  },
+                  "receiverPartyReference": {
+                    "reference": "5264151754007"
+                  }
+                }
+              }]
+            }
+          }
+        }
+      }
+    }
+  }
+}

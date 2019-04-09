@@ -1,0 +1,197 @@
+{
+  "choice": "ProposeNewTrade",
+  "argument": {
+    "ps": [{
+      "id": "6444838468414",
+      "p": "DEALER-D02"
+    }, {
+      "id": "5264151754007",
+      "p": "CCP-P01"
+    }],
+    "base": {
+      "timestamp": [{
+        "qualification": "eventCreationDateTime",
+        "dateTime": "2018-10-16T21:40:56.604+00:00[UTC]"
+      }],
+      "rosettaKey": "525489e7",
+      "eventDate": "2018-10-16",
+      "primitive": {
+
+      },
+      "eventIdentifier": [{
+        "issuerReference": {
+          "reference": "UNKNOWN"
+        },
+        "assignedIdentifier": [{
+          "version": 1,
+          "identifier": {
+            "value": "HGRFNL91MV"
+          }
+        }]
+      }],
+      "action": "New"
+    },
+    "after": {
+      "contract": {
+        "contractIdentifier": [{
+          "issuerReference": {
+            "reference": "6444838468414"
+          },
+          "assignedIdentifier": [{
+            "version": 1,
+            "identifier": {
+              "value": "N8YJUD59K6"
+            }
+          }]
+        }, {
+          "issuerReference": {
+            "reference": "5264151754007"
+          },
+          "assignedIdentifier": [{
+            "version": 1,
+            "identifier": {
+              "value": "N8YJUD59K6"
+            }
+          }]
+        }],
+        "tradeDate": {
+          "date": "2018-10-16"
+        },
+        "rosettaKey": "dd06a18e",
+        "party": [{
+          "id": "6444838468414",
+          "name": {
+            "value": "DEALER-D02"
+          },
+          "partyId": [{
+            "value": "6444838468414"
+          }],
+          "account": {
+            "accountNumber": {
+              "value": "D02691708843"
+            }
+          }
+        }, {
+          "id": "5264151754007",
+          "name": {
+            "value": "CCP-P01"
+          },
+          "partyId": [{
+            "value": "5264151754007"
+          }],
+          "account": {
+            "accountNumber": {
+              "value": "P01547927812"
+            }
+          }
+        }],
+        "contractualProduct": {
+          "productIdentification": {
+            "primaryAssetClass": {
+              "value": "Credit"
+            },
+            "productQualifier": "Credit_Default_Swap_Index"
+          },
+          "economicTerms": {
+            "rosettaKeyValue": "cf1e7815",
+            "payout": {
+              "creditDefaultPayout": {
+                "protectionTerms": [{
+                  "notionalAmount": {
+                    "amount": 15000000,
+                    "currency": {
+                      "value": "EUR"
+                    }
+                  }
+                }],
+                "rosettaKey": "ad29ba90",
+                "generalTerms": {
+                  "dateAdjustments": {
+                    "businessCenters": {
+                      "businessCenter": [{
+                        "value": "EUTA"
+                      }]
+                    },
+                    "businessDayConvention": "FOLLOWING"
+                  },
+                  "indexReferenceInformation": {
+                    "indexName": {
+                      "value": "iTraxx Europe Crossover Series 29 Version 1"
+                    },
+                    "indexSeries": 29
+                  },
+                  "buyerSeller": {
+                    "buyerPartyReference": {
+                      "reference": "6444838468414"
+                    },
+                    "sellerPartyReference": {
+                      "reference": "5264151754007"
+                    }
+                  }
+                }
+              },
+              "interestRatePayout": [{
+                "quantity": {
+                  "notionalSchedule": {
+                    "notionalStepSchedule": {
+                      "initialValue": 15000000,
+                      "currency": {
+                        "value": "EUR"
+                      }
+                    }
+                  }
+                },
+                "rosettaKey": "d0d7d4b9",
+                "dayCountFraction": {
+                  "value": "ACT_360"
+                },
+                "rateSpecification": {
+                  "fixedRate": {
+                    "initialValue": 0.010000
+                  }
+                },
+                "calculationPeriodDates": {
+                  "effectiveDate": {
+                    "adjustableDate": {
+                      "unadjustedDate": "2018-10-18"
+                    }
+                  },
+                  "terminationDate": {
+                    "adjustableDate": {
+                      "unadjustedDate": "2025-12-20"
+                    }
+                  }
+                },
+                "payerReceiver": {
+                  "payerPartyReference": {
+                    "reference": "6444838468414"
+                  },
+                  "receiverPartyReference": {
+                    "reference": "5264151754007"
+                  }
+                }
+              }],
+              "cashflow": [{
+                "cashflowAmount": {
+                  "amount": 80000,
+                  "currency": {
+                    "value": "EUR"
+                  }
+                },
+                "rosettaKey": "TBA",
+                "payerReceiver": {
+                  "payerPartyReference": {
+                    "reference": "6444838468414"
+                  },
+                  "receiverPartyReference": {
+                    "reference": "5264151754007"
+                  }
+                }
+              }]
+            }
+          }
+        }
+      }
+    }
+  }
+}

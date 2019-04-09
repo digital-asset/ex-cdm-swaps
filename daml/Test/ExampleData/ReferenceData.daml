@@ -1,0 +1,21 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Test.ExampleData.ReferenceData where
+
+import DA.Date
+import Org.Isda.Cdm.EventSpecificationModule hiding (RefData)
+import Main.ReferenceData
+
+emptyRefData : RefData
+emptyRefData = RefData with
+                holidayCalendarCids = []
+                observationCids = []
+
+usnyHCI : Scenario HolidayCalendarInstance
+usnyHCI = do
+  observers <- mapA getParty ["CCP-P01", "DEALER-D01", "DEALER-D02", "DEALER-D03", "CLIENT-C04"]
+  publisher <- getParty "REUTERS"
+  let d = HolidayCalendarData with label = "USNY", holidays = [], weekend = [Saturday, Sunday]
+  return HolidayCalendarInstance with ..

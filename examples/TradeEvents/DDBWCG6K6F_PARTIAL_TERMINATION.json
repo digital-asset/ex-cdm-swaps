@@ -1,0 +1,55 @@
+{
+  "choice": "ProposePartialTermination",
+  "argument": {
+    "ps": [{
+      "id": "8153870222725",
+      "p": "DEALER-D03"
+    }, {
+      "id": "2834529327893",
+      "p": "CLIENT-C02"
+    }],
+    "base": {
+      "timestamp": [{
+        "dateTime": "2018-11-12T10:55:50.211+00:00[UTC]",
+        "qualification": "eventCreationDateTime"
+      }],
+      "eventDate": "2018-11-12",
+      "transfer": [{
+        "rosettaKey": "ae60877d",
+        "settlementDate": {
+          "unadjustedDate": "2018-11-13"
+        },
+        "status": "Pending",
+        "cashTransfer": [{
+          "payerReceiver": {
+            "payerPartyReference": {"reference" : "8153870222725"},
+            "receiverPartyReference": {"reference" : "2834529327893"}
+          },
+          "amount": {
+            "amount": 10000,
+            "currency": {"value" : "EUR"}
+          },
+          "cashflowType": "Fee"
+        }]
+      }],
+      "effectiveDate": "2018-11-13",
+      "eventIdentifier": [{
+        "issuerReference": {"reference" : "UNKNOWN"},
+        "assignedIdentifier": [{
+          "version": 1,
+          "identifier": {"value" : "WGINLUMSGM"}
+        }]
+      }],
+      "action": "New"
+    },
+    "change": [{
+      "notionalSchedule": {
+        "notionalStepSchedule": {
+          "initialValue": 100000000.00,
+          "currency": {"value" : "EUR"}
+        }
+      }
+    }],
+    "contractReference": "a9aa15ee"
+  }
+}

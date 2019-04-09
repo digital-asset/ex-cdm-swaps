@@ -1,0 +1,196 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.MasterAgreement where
+
+import Org.Isda.Cdm.EventSpecificationModule as Cdm hiding (Party, RefData)
+import Main.Event.Instance
+import Main.Event.Proposal
+import Main.Market.Contract
+import Main.ReferenceData
+import Main.Types
+import Main.Utils.Common
+import Main.Utils.Cdm
+
+---------------------------------------------- Instance ------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+
+-- | Master Agreement used to trigger new events. This can either be the proposal of an event
+-- (e.g. NewTrade, Termination, etc.) or the creation of a derived event.
+template MasterAgreementInstance
+  with
+    p1  : Party
+    p2  : Party
+  where
+    signatory p1, p2
+
+    controller p1 can
+      nonconsuming ProposeNewTrade1: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, after: PostInceptionState
+        do createNewTradeProposal p1 ps base after
+
+    controller p2 can
+      nonconsuming ProposeNewTrade2: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, after: PostInceptionState
+        do createNewTradeProposal p2 ps base after
+
+    controller p1 can
+      nonconsuming ProposeTermination1: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, ciCid: ContractId ContractInstance
+        do createTerminationProposal p1 ps base ciCid
+
+    controller p2 can
+      nonconsuming ProposeTermination2: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, ciCid: ContractId ContractInstance
+        do createTerminationProposal p2 ps base ciCid
+
+    controller p1 can
+      nonconsuming ProposePartialTermination1: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, change: [ContractualQuantity], ciCid: ContractId ContractInstance
+        do createPartialTerminationProposal p1 ps base change ciCid
+
+    controller p2 can
+      nonconsuming ProposePartialTermination2: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, change: [ContractualQuantity], ciCid: ContractId ContractInstance
+        do createPartialTerminationProposal p2 ps base change ciCid
+
+    controller p1 can
+      nonconsuming ProposeNovation1: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, contractNew: Contract, ciCid: ContractId ContractInstance
+        do createNovationProposal p1 ps base contractNew ciCid
+
+    controller p2 can
+      nonconsuming ProposeNovation2: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, contractNew: Contract, ciCid: ContractId ContractInstance
+        do createNovationProposal p2 ps base contractNew ciCid
+
+    controller p1 can
+      nonconsuming ProposePartialNovation1: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, change: [ContractualQuantity],  contractNew: Contract, ciCid: ContractId ContractInstance
+        do createPartialNovationProposal p1 ps base change contractNew ciCid
+
+    controller p2 can
+      nonconsuming ProposePartialNovation2: ContractId EventProposal
+        with ps: [PartyWithId], base: BaseEvent, change: [ContractualQuantity],  contractNew: Contract, ciCid: ContractId ContractInstance
+        do createPartialNovationProposal p2 ps base change contractNew ciCid
+
+    controller p1 can
+      nonconsuming CreateDerivedEvent1: ContractId EventInstance
+        with refData: RefData, ciCid: ContractId ContractInstance, event: Event
+        do createDerivedEvent refData event ciCid
+
+    controller p2 can
+      nonconsuming CreateDerivedEvent2: ContractId EventInstance
+        with refData: RefData, ciCid: ContractId ContractInstance, event: Event
+        do createDerivedEvent refData event ciCid
+
+createNewTradeProposal :
+  Party
+  -> [PartyWithId]
+  -> BaseEvent
+  -> PostInceptionState
+  -> Update (ContractId EventProposal)
+createNewTradeProposal p ps base after = do
+  let spec = NewTradeSpec with ..
+  event <- setEventRosettaKey $ Cdm.buildNewTradeEvent spec
+  create EventProposal with ps, d = event, sigs = [p]
+
+createTerminationProposal :
+  Party
+  -> [PartyWithId]
+  -> BaseEvent
+  -> ContractId ContractInstance
+  -> Update (ContractId EventProposal)
+createTerminationProposal p ps base ciCid = do
+  ci <- fetch ciCid
+  let spec = TerminationSpec with contract = ci.d, ..
+  event <- setEventRosettaKey $ Cdm.buildTerminationEvent spec
+  create EventProposal with ps, d = event, sigs = [p]
+
+createPartialTerminationProposal :
+  Party
+  -> [PartyWithId]
+  -> BaseEvent
+  -> [ContractualQuantity]
+  -> ContractId ContractInstance
+  -> Update (ContractId EventProposal)
+createPartialTerminationProposal p ps base change ciCid = do
+  ci <- fetch ciCid
+  let spec = PartialTerminationSpec with contract = ci.d, ..
+  event <- setEventRosettaKey $ Cdm.buildPartialTerminationEvent spec
+  create EventProposal with ps, d = event, sigs = [p]
+
+createNovationProposal :
+  Party
+  -> [PartyWithId]
+  -> BaseEvent
+  -> Contract
+  -> ContractId ContractInstance
+  -> Update (ContractId EventProposal)
+createNovationProposal p ps base contractNew ciCid = do
+  ci <- fetch ciCid
+  let spec = NovationSpec with contract = ci.d, ..
+  event <- setEventRosettaKey $ Cdm.buildNovationEvent spec
+  create EventProposal with ps, d = event, sigs = [p]
+
+createPartialNovationProposal :
+  Party
+  -> [PartyWithId]
+  -> BaseEvent
+  -> [ContractualQuantity]
+  -> Contract
+  -> ContractId ContractInstance
+  -> Update (ContractId EventProposal)
+createPartialNovationProposal p ps base change contractNew ciCid = do
+  ci <- fetch ciCid
+  let spec = PartialNovationSpec with contract = ci.d, ..
+  event <- setEventRosettaKey $ Cdm.buildPartialNovationEvent spec
+  create EventProposal with ps, d = event, sigs = [p]
+
+createDerivedEvent :
+  RefData
+  -> Event
+  -> ContractId ContractInstance
+  -> Update (ContractId EventInstance)
+createDerivedEvent refData event ciCid = do
+  ledgerTime <- getTime
+  assertOnOrAfterDateMsg "can only create derived events after event date" event.eventDate
+
+  -- Re-build derived events and check that the provided event is identical
+  ci <- fetch ciCid
+  lifecycleEvents <- mapA (\enCid -> do en <- fetch enCid; return en.d) ci.lifecycleEventCids
+  let spec = DerivedSpec with
+              fromDate = Some event.eventDate
+              toDate = Some event.eventDate
+              pastEvents = lifecycleEvents
+              contract = ci.d
+
+  eventNew <-
+    setEventRosettaKey
+    =<< (fromSomeTry "no events found" .
+          find (\e -> e.effectiveDate == event.effectiveDate && e.eventQualifier == event.eventQualifier))
+    =<< (flip Cdm.buildDerivedEvents) spec
+    <$> toCdmRefData refData
+  assertMsg "event has realized" (eventNew.primitive /= emptyPrimitiveEvent)
+
+  -- Net transfers
+  let eventNetted = eventNew with
+                      primitive = eventNew.primitive with
+                        transfer = Cdm.netTransfers eventNew.primitive.transfer
+
+  create EventInstance with ps = ci.ps, d = eventNetted
+
+---------------------------------------------- Proposal ------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------
+
+template MasterAgreementProposal
+  with
+    p1  : Party
+    p2  : Party
+  where
+    signatory p1
+
+    controller p2 can
+      Accept: ContractId MasterAgreementInstance
+        do create MasterAgreementInstance with p1, p2

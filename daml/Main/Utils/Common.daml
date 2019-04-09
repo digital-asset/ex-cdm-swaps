@@ -1,0 +1,63 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Utils.Common where
+
+import DA.Date
+import Main.Types
+
+createCidD : (Template a) => ContractId a  -> Update (ContractIdData a)
+createCidD dCid = do
+  d <- fetch dCid
+  return ContractIdData with ..
+
+-- | Get first daml party
+getFirstParty : [PartyWithId] -> Party
+getFirstParty (x::_) = x.p
+
+-- | Get second daml party (default to first if not available)
+getSecondParty : [PartyWithId] -> Party
+getSecondParty (_::x::_) = x.p
+getSecondParty xs = getFirstParty xs
+
+-- | Get thrid daml party (default to first if not available)
+getThirdParty : [PartyWithId] -> Party
+getThirdParty (_::_::x::_) = x.p
+getThirdParty xs = getFirstParty xs
+
+-- | Get fourth daml party (default to first if not available)
+getFourthParty : [PartyWithId] -> Party
+getFourthParty (_::_::_::x::_) = x.p
+getFourthParty xs = getFirstParty xs
+
+-- | Try to get value from optional (fails if None)
+fromSomeTry : Text -> Optional a -> Update a
+fromSomeTry _ (Some x) = return x
+fromSomeTry msg None = abort msg
+
+-- | Try to get head from list (fails if empty)
+headTry : Text -> [a] -> Update a
+headTry _ (x::_) = return x
+headTry msg [] = abort msg
+
+-- | Partition array according to a predicate
+partition : (a -> Bool) -> [a] -> ([a], [a])
+partition p xs = foldr (select p) ([],[]) xs
+  where
+    select : (a -> Bool) -> a -> ([a], [a]) -> ([a], [a])
+    select p x (ts,fs) | p x       = (x::ts,fs)
+                       | otherwise = (ts, x::fs)
+
+-- | Assert if date is on or after a given date
+assertOnOrAfterDateMsg : (CanAbort m, HasTime m) => Text -> Date -> m ()
+assertOnOrAfterDateMsg msg date = do
+  now <- getTime
+  assertMsg msg $ date <= toDateUTC now
+
+-- | Fetch and archive a contract
+fetchAndArchive : Template a => ContractId a -> Update a
+fetchAndArchive cid = do
+  c <- fetch cid
+  exercise cid Archive
+  return c

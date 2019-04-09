@@ -1,0 +1,167 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Test.Event where
+
+import DA.Date as D
+import DA.List
+import DA.Optional
+import Org.Isda.Cdm.EventSpecificationModule hiding (exercise, Trigger)
+import Main.Event.Instance
+import Main.Event.Proposal
+import Main.Market.Cash as Cash
+import Main.MasterAgreement
+import Main.Workflow.Allocate as AllocateWorkflow
+import Main.Workflow.DeriveEvents as DeriveEventsWorkflow
+import Main.Types
+import Test.ExampleData.Contract
+import Test.ExampleData.Counterparty
+import Test.ExampleData.ReferenceData
+import Test.Utils
+
+test_Inception = scenario do
+  -- Setup
+  d03_5 <- d03_5
+  p01_1 <- p01_1
+  let p1 = PartyWithId with p = d03_5.damlParty, id = d03_5.partyId
+  let p2 = PartyWithId with p = p01_1.damlParty, id = p01_1.partyId
+  maCid <- createMasterAgreement (p1.p, p2.p)
+
+  -- New trade
+  let contract = buildCds 20000000.0 (d03_5, p01_1) [(1, "CAXMKVEHOV"), (1, "CAXMKVEHOV_2")]
+  let after = PostInceptionState with
+                creditLimitInformation = None
+                tradeWarehouseWorkflow = None
+                contract = contract
+  let base = emptyBaseEvent with
+              action = ActionEnum_New
+              eventDate = D.date 2018 Sep 24
+              eventIdentifier =
+                [ Identifier with
+                    id = None
+                    issuer = None
+                    issuerReference = None
+                    assignedIdentifier =
+                      [ AssignedIdentifier with
+                          identifier = fieldWithEmptyMeta "RTPBD5KA8P"
+                          version = Some 1
+                      ]
+                ]
+
+  -- Execution
+  passToDate $ D.date 2018 Sep 24
+  epCid <- submit p1.p do exercise maCid ProposeNewTrade1 with ps = [p1, p2], base, after
+  eiCid <- fromRightS "Unknown error" =<< (submit p2.p do exercise epCid Accept2)
+  res <- submit p1.p do exercise eiCid Lifecycle1 with ciCids = [], ctiCids = []
+
+  en <- submit p1.p do fetch res.enCid
+  return (maCid, res, en)
+
+test_Termination = scenario do
+  -- New Trade
+  (maCid, inceptionResult, inceptionNotification) <- test_Inception
+  let [p1, p2] = inceptionNotification.ps
+
+  -- Termination data
+  let base = emptyBaseEvent with
+              action = ActionEnum_New
+              eventDate = D.date 2019 Sep 25
+              eventIdentifier =
+                [ Identifier with
+                  id = None
+                  issuer = None
+                  issuerReference = None
+                  assignedIdentifier =
+                    [ AssignedIdentifier with
+                        identifier = fieldWithEmptyMeta "Termination"
+                        version = Some 1
+                    ]
+                ]
+  -- Execution
+  passToDate $ D.date 2019 Sep 25
+  epCid <- submit p1.p do exercise maCid ProposeTermination1 with ps = [p1, p2], base, ciCid = head inceptionResult.ciCids
+  eiCid <- fromRightS "Unknown error" =<< (submit p2.p do exercise epCid Accept2)
+  submit p1.p do exercise eiCid Lifecycle1 with ciCids = inceptionResult.ciCids, ctiCids = []
+
+  return ()
+
+test_Novation = scenario do
+  -- New Trade
+  (maCid, inceptionResult, inceptionNotification) <- test_Inception
+  let [p1, p2] = inceptionNotification.ps
+
+  -- Novation data
+  d02_2 <- d02_2
+  c04_4 <- c04_4
+  let p3 = PartyWithId with p = d02_2.damlParty, id = d02_2.partyId
+  let p4 = PartyWithId with p = c04_4.damlParty, id = c04_4.partyId
+  let base = emptyBaseEvent with
+              action = ActionEnum_New
+              eventDate = D.date 2019 Sep 30
+              eventIdentifier =
+                [ Identifier with
+                  id = None
+                  issuer = None
+                  issuerReference = None
+                  assignedIdentifier =
+                    [ AssignedIdentifier with
+                        identifier = fieldWithEmptyMeta "Novation"
+                        version = Some 1
+                    ]
+                ]
+  let contractNew = buildCds 20000000.0 (d02_2, c04_4) [(1, "AGEZTVDH")]
+
+  -- Execution
+  passToDate $ D.date 2019 Sep 30
+  epCid <- submit p1.p do exercise maCid ProposeNovation1 with ps = [p1, p2, p3, p4], ciCid = head inceptionResult.ciCids, ..
+  epCid <- fromLeftS "Unknown error" =<< (submit p2.p do exercise epCid Accept2)
+  epCid <- fromLeftS "Unknown error" =<< (submit p3.p do exercise epCid Accept3)
+  eiCid <- fromRightS "Unknown error" =<< (submit p4.p do exercise epCid Accept4)
+  submit p1.p do exercise eiCid Lifecycle1 with ciCids = inceptionResult.ciCids, ctiCids = []
+
+  return ()
+
+
+test_Derived = scenario do
+  -- New Trade
+  (maCid, inceptionResult, inceptionNotification) <- test_Inception
+  let ciCid = head inceptionResult.ciCids
+  let [p1, p2] = inceptionNotification.ps
+  ci <- submit p2.p do fetch ciCid
+  let p2Account = (fromSome (ci.d.party!!1).account).accountNumber
+
+  -- Cash
+  pFED <- getParty "FED"
+  transferCid <- submit pFED do create CashTransferRequest with
+                                          issuer = pFED
+                                          sender = pFED
+                                          receiver = p2.p
+                                          accountFrom = "fedAccount"
+                                          currency = "USD"
+                                          amount = 1000000.0
+  cashCid <- submit p2.p do exercise transferCid Cash.Accept with accountTo = p2Account.value
+
+  -- Reference Data
+  usnyHCICid <- createHolidayCalendarInstance usnyHCI
+  let refData = emptyRefData with holidayCalendarCids = [usnyHCICid]
+
+  -- Discovery
+  dewCid <- submit p1.p do create DeriveEventsWorkflow with sig = p1.p
+  edCids <- submit p1.p do exercise dewCid DeriveEventsWorkflow.Trigger with refData, ciCid, fromDate = None, toDate = None
+
+  -- Create event
+  passToDate $ D.date 2018 Sep 26
+  eiCid <- submit p1.p do exercise (head edCids) CreateEvent with maCid, ciCid, refData
+
+  -- Instruct transfers
+  instructResult <- submit p1.p do exercise eiCid Instruct1
+
+  -- Allocate cash
+  awCid <- submit p2.p do create AllocateWorkflow with sig = p2.p
+  allocResult <- submit p2.p do exercise awCid AllocateWorkflow.Trigger with ctiCids = (head instructResult.ctiCids), cashCids = [cashCid]
+
+  -- Lifecycle
+  submit p1.p do exercise instructResult.eiCid Lifecycle1 with ciCids = [ciCid], ctiCids = [allocResult.ctiCids]
+
+  return ()

@@ -1,0 +1,74 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Utils.Cdm where
+
+import DA.List as L
+import DA.Optional
+import Org.Isda.Cdm.EventSpecificationModule as Cdm
+import Main.Types
+import Main.Utils.Common
+import Prelude as Daml hiding (id)
+
+-- | Check that each party has linked data
+checkParties : [PartyWithId] -> [Cdm.Party] -> Bool
+checkParties parties partyData =
+  let partyDataIds = map (\pd -> pd.id) partyData
+  in L.length partyDataIds == L.length partyData && all (\party -> Some party.id `elem` partyDataIds) parties
+
+-- | Find party data by reference
+findPartyDataByReference : ReferenceWithMeta Cdm.Party -> [Cdm.Party] -> Update Cdm.Party
+findPartyDataByReference partyReference partyData =
+  let reference = getReference partyReference
+  in fromSomeTry ("party with reference " <> reference <> " not found")
+      $ find (\pd -> Some reference ==  pd.id) partyData
+
+-- | Find party by reference
+findPartyByReference : ReferenceWithMeta Cdm.Party -> [PartyWithId] -> Update PartyWithId
+findPartyByReference partyReference parties =
+  let reference = getReference partyReference
+  in fromSomeTry ("party with reference " <> reference <> " not found")
+      $ find (\p -> reference ==  p.id) parties
+
+-- | Find party by reference
+findPartyByPartyData : Cdm.Party -> [PartyWithId] -> Update PartyWithId
+findPartyByPartyData partyData parties =
+  fromSomeTry ("party with data " <> show partyData <> " not found")
+    $ find (\p -> partyData.id == Some p.id) parties
+
+-- | Find account by reference or party
+findAccount : Optional (ReferenceWithMeta Account) -> Cdm.Party -> [Account] -> Update Account
+findAccount (Some accountReference) _ _ = abort "'accountReference' not supported yet"
+findAccount None partyData _ = fromSomeTry "account required in party data if no reference is given" partyData.account
+
+-- | Find identifier by party
+findIdentifierByParty : PartyWithId -> [Identifier] -> Update Identifier
+findIdentifierByParty party idts = do
+  case filter (\idt -> fmap getReference idt.issuerReference == Some party.id) idts of
+    [idt]      -> return idt
+    otherwise  -> fail "expecting a single matching identifier per party"
+
+-- | Set rosetta key in Event (in the absence of a proper handling it is simply set to the first event identifier)
+setEventRosettaKey : Event -> Update Event
+setEventRosettaKey event = do
+  eventIdentifier <- headTry "expecting at least one eventIdentifier" event.eventIdentifier
+  assignedIdentifier <- headTry "expecting at least one assignedIdentifier" eventIdentifier.assignedIdentifier
+  let rosettaKey = assignedIdentifier.identifier.value <> "_" <> (show $ fromOptional 0 assignedIdentifier.version)
+  return event with rosettaKey
+
+emptyPrimitiveEvent : PrimitiveEvent
+emptyPrimitiveEvent = PrimitiveEvent with
+                        allocation      = []
+                        exercise        = None
+                        inception       = []
+                        observation     = []
+                        quantityChange  = []
+                        reset           = []
+                        termsChange     = None
+                        transfer        = []
+
+getReference : ReferenceWithMeta a -> Text
+getReference x | (Some ref) <- x.reference = ref
+getReference _ = error "reference expected to be set"
+

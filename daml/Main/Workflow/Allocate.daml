@@ -1,0 +1,64 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Workflow.Allocate where
+
+import DA.Action
+import Main.Market.Cash
+import Main.Types
+import Main.Utils.Cdm
+import Main.Utils.Common
+
+data AllocationResult = AllocationResult with
+  ctiCids   : [ContractId CashTransferInstruction]
+  cashCids  : [ContractId Cash]
+
+-- | Workflow to allocate cash to a list of cash transfer instruction
+template AllocateWorkflow
+  with
+    sig : Party
+  where
+    signatory sig
+
+    controller sig can
+      nonconsuming Trigger: AllocationResult
+        with
+          ctiCids  : [ContractId CashTransferInstruction]
+          cashCids : [ContractId Cash]
+        do
+          ctiCidDs <- mapA createCidD ctiCids
+          cashCidDs <- mapA createCidD cashCids
+          (allocCtiCids, restCashCidDs) <- foldlA allocateImpl ([], cashCidDs) ctiCidDs
+          return AllocationResult with
+                  ctiCids  = allocCtiCids
+                  cashCids = map (\x -> x.dCid) restCashCidDs
+
+allocateImpl : ([ContractId CashTransferInstruction], [ContractIdData Cash])
+                -> ContractIdData CashTransferInstruction
+                -> Update  ([ContractId CashTransferInstruction], [ContractIdData Cash])
+allocateImpl (allocCtiCids, restCashCidDs) ctiCidD = do
+  payerPartyData <- findPartyDataByReference ctiCidD.d.d.cashTransfer.payerReceiver.payerPartyReference ctiCidD.d.d.party
+  payerParty     <- findPartyByReference ctiCidD.d.d.cashTransfer.payerReceiver.payerPartyReference ctiCidD.d.ps
+  payerAccount   <- findAccount ctiCidD.d.d.cashTransfer.payerReceiver.payerAccountReference payerPartyData ctiCidD.d.d.account
+
+  let (matchedCashCidDs, otherCashCidDs) = partition
+                                            (\cashCidD -> cashCidD.d.owner == payerParty.p &&
+                                                          cashCidD.d.account == payerAccount.accountNumber.value &&
+                                                          cashCidD.d.currency == ctiCidD.d.d.cashTransfer.amount.currency.value
+                                            )
+                                            restCashCidDs
+  mergedCashCidD <- mergeCash matchedCashCidDs
+  case mergedCashCidD of
+    None -> abort ("no cash available for instruction " <> ctiCidD.d.d.eventReference)
+    Some cashCidD | cashCidD.d.amount < ctiCidD.d.d.cashTransfer.amount.amount -> abort ("not enough cash available for instruction " <> ctiCidD.d.d.eventReference)
+    Some cashCidD -> do
+      splitted <- exercise cashCidD.dCid Split with splitAmount = ctiCidD.d.d.cashTransfer.amount.amount
+      restCashCidD <- createCidD splitted.restCid
+      allocCtiCid <- exercise ctiCidD.dCid Allocate with cashCid = splitted.splitCid
+      return (allocCtiCid::allocCtiCids, restCashCidD::otherCashCidDs)
+
+  where
+    mergeCash : [ContractIdData Cash] -> Update (Optional (ContractIdData Cash))
+    mergeCash [] = return None
+    mergeCash cashCidDs = Some <$> foldl1A (\c1 c2 -> createCidD =<< exercise c1.dCid Merge with otherCid = c2.dCid) cashCidDs

@@ -1,0 +1,168 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Event.Instance where
+
+import DA.List as List
+import DA.Optional
+import Org.Isda.Cdm.EventSpecificationModule as Cdm hiding (length)
+import Main.Event.Notification
+import Main.Market.Cash
+import Main.Market.Contract
+import Main.Types
+import Main.Utils.Cdm
+import Main.Utils.Common
+import Prelude as Daml
+
+-- | A CDM event that has been accepted by all involved parties but has not been applied yet
+template EventInstance
+  with
+    ps  : [PartyWithId]
+      -- ^ Parties (including an id to link to party data in d.party) involved in the event
+    d   : Event
+      -- ^ The CDM event
+  where
+    signatory map (\sig -> sig.p) ps
+    ensure checkParties ps d.party
+
+    -- Instruct transfers by first party
+    controller [getFirstParty ps] can
+      Instruct1: InstructResult
+        do instruct this
+
+    -- Instruct transfers by second party
+    controller [getSecondParty ps] can
+      Instruct2: InstructResult
+        do instruct this
+
+    -- Lifecycle event (i.e. move contracts and cash) by first party
+    controller [getFirstParty ps] can
+      Lifecycle1: LifecycleResult
+        with
+          ciCids  : [ContractId ContractInstance]
+          ctiCids : [[ContractId CashTransferInstruction]]
+        do lifecycle this ciCids ctiCids
+
+    -- Lifecycle event (i.e. move contracts and cash) by second party
+    controller [getSecondParty ps] can
+      Lifecycle2: LifecycleResult
+        with
+          ciCids  : [ContractId ContractInstance]
+          ctiCids : [[ContractId CashTransferInstruction]]
+        do lifecycle this ciCids ctiCids
+
+data InstructResult = InstructResult with
+  eiCid   : ContractId EventInstance
+  ctiCids : [[ContractId CashTransferInstruction]]
+
+data LifecycleResult = LifecycleResult with
+  enCid     : ContractId EventNotification
+  ciCids    : [ContractId ContractInstance]
+  cashCids  : [[ContractId Cash]]
+
+instruct : EventInstance -> Update InstructResult
+instruct ei = do
+  let transfer = ei.d.primitive.transfer
+  assertMsg "can only instruct transfers" (not $ null transfer)
+  assertMsg "securityTransfer not supported yet" $ all (\t -> null t.securityTransfer) transfer
+  assertMsg "commodityTransfer not supported yet" $ all (\t -> null t.commodityTransfer) transfer
+  assertOnOrAfterDateMsg "can only instruct after event date" ei.d.eventDate
+
+  transferNew <- mapA setStatus transfer
+  ctiCids <- mapA (mapA instructCashTransfer) $ map (\t -> t.cashTransfer) transferNew
+  eiCidNew <- create EventInstance with ps = ei.ps, d = ei.d with primitive = ei.d.primitive with transfer = transferNew
+  return InstructResult with eiCid = eiCidNew, ctiCids
+
+  where
+    setStatus : TransferPrimitive -> Update TransferPrimitive
+    setStatus transfer = do
+      assertMsg "status ok" (isNone transfer.status || transfer.status == Some TransferStatusEnum_Pending)
+      return transfer with status = Some TransferStatusEnum_Instructed
+
+    instructCashTransfer : CashTransferComponent -> Update (ContractId CashTransferInstruction)
+    instructCashTransfer cashTransfer = do
+      (ps, party, account) <- getData cashTransfer.payerReceiver
+      create CashTransferInstruction with
+              ps
+              d = CashTransferInstructionData with
+                    cashTransfer
+                    party
+                    account
+                    eventReference = ei.d.rosettaKey
+              allocatedCashCid = None
+
+      where
+        getData : PayerReceiver -> Update ([PartyWithId], [Cdm.Party], [Account])
+        getData payerReceiver = do
+          payerParty        <- findPartyByReference payerReceiver.payerPartyReference ei.ps
+          payerPartyData    <- findPartyDataByReference payerReceiver.payerPartyReference ei.d.party
+          payerAccount      <- findAccount payerReceiver.payerAccountReference payerPartyData ei.d.account
+          receiverParty     <- findPartyByReference payerReceiver.receiverPartyReference ei.ps
+          receiverPartyData <- findPartyDataByReference payerReceiver.receiverPartyReference ei.d.party
+          receiverAccount   <- findAccount payerReceiver.receiverAccountReference receiverPartyData ei.d.account
+          return ([payerParty, receiverParty], [payerPartyData, receiverPartyData], [payerAccount, receiverAccount])
+
+lifecycle : EventInstance -> [ContractId ContractInstance] -> [[ContractId CashTransferInstruction]] -> Update LifecycleResult
+lifecycle ei ciCids ctiCids= do
+  assertOnOrAfterDateMsg "can only lifecycle after effective time" $ fromOptional ei.d.eventDate ei.d.effectiveDate
+
+  (transferNew, cashCids) <- unzip <$> mapA settleTransfer (zip ei.d.primitive.transfer ctiCids)
+  enCid <- create EventNotification with ps = ei.ps, d = ei.d with primitive = ei.d.primitive with transfer = transferNew
+  ciCidsNew <- moveContracts ei enCid ciCids
+
+  return $ LifecycleResult with enCid, ciCids = ciCidsNew, cashCids
+
+  where
+    moveContracts : EventInstance -> ContractId EventNotification -> [ContractId ContractInstance] -> Update [ContractId ContractInstance]
+    moveContracts ei enCid ciCids = do
+      cis <- mapA fetchAndArchive ciCids
+      let rosettaKeys = map (\c -> c.d.rosettaKey) cis
+
+      let isLifecycleEvent =
+            ei.d.eventQualifier == Some "Reset" ||
+            ei.d.eventQualifier == Some "CashTransfer"
+
+      if (isLifecycleEvent) then do
+        let contractReferences = optional [] (\l -> map getReference l.contractReference) ei.d.lineage
+        assertMsg "expecting only referenced contracts" $ sort contractReferences == sort rosettaKeys
+        mapA
+          (\ci ->
+            create ContractInstance with
+                    ps = ci.ps
+                    lifecycleEventCids = enCid :: ci.lifecycleEventCids
+                    d = ci.d)
+          cis
+      else do
+        let effectedRosettaKeys = optional [] (\ee -> ee.effectedContract) ei.d.eventEffect
+        assertMsg "expecting only effected contracts" $ sort effectedRosettaKeys == sort rosettaKeys
+        let contractsNew = Cdm.getAfterContracts ei.d
+        mapA
+          (\contract -> do
+            let lifecycleEventCids =
+                  optional [] (\ci -> ci.lifecycleEventCids)
+                  $ find (\ci -> ((contract.contractIdentifier!!0).assignedIdentifier!!0).identifier == ((ci.d.contractIdentifier!!0).assignedIdentifier!!0).identifier) cis
+            ps <- mapA (\pd -> findPartyByPartyData pd ei.ps) contract.party
+            create ContractInstance with ps, lifecycleEventCids, d = contract)
+          contractsNew
+
+    settleTransfer : (TransferPrimitive, [ContractId CashTransferInstruction]) -> Update (TransferPrimitive, [ContractId Cash])
+    settleTransfer (transfer, cashTransferInstructionCids) = do
+      -- TODO: check that we are after settlement date
+      assertMsg "securityTransfer not supported yet" $ null transfer.securityTransfer
+      assertMsg "commodityTransfer not supported yet" $ null transfer.commodityTransfer
+
+      assertMsg "status ok" (transfer.status == Some TransferStatusEnum_Instructed)
+      let transferNew = transfer with status = Some TransferStatusEnum_Settled
+
+      assertMsg "number of instructions matches" (List.length transfer.cashTransfer == List.length cashTransferInstructionCids)
+      cashCids <-
+        mapA
+          (\(cashTransfer, cashTransferInstructionCid) -> do
+            cashTransferInstruction <- fetch cashTransferInstructionCid
+            assertMsg "rosettaKey matches" (ei.d.rosettaKey == cashTransferInstruction.d.eventReference)
+            assertMsg "details match" (cashTransfer == cashTransferInstruction.d.cashTransfer)
+            settle cashTransferInstructionCid)
+          (zip transfer.cashTransfer cashTransferInstructionCids)
+
+      return (transferNew, cashCids)

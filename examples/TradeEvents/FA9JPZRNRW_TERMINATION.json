@@ -1,0 +1,47 @@
+{
+  "choice": "ProposeTermination",
+  "argument": {
+    "ps": [{
+      "id": "5264151754007",
+      "p": "CCP-P01"
+    }, {
+      "id": "0373256359942",
+      "p": "CLIENT-C05"
+    }],
+    "base": {
+      "timestamp": [{
+        "dateTime": "2018-11-08T10:55:50.307+00:00[UTC]",
+        "qualification": "eventCreationDateTime"
+      }],
+      "eventDate": "2018-11-08",
+      "transfer": [{
+        "rosettaKey": "8e7c44ab",
+        "settlementDate": {
+          "unadjustedDate": "2018-11-09"
+        },
+        "status": "Pending",
+        "cashTransfer": [{
+          "payerReceiver": {
+            "payerPartyReference": {"reference" : "5264151754007"},
+            "receiverPartyReference": {"reference" : "0373256359942"}
+          },
+          "amount": {
+            "amount": 10000,
+            "currency": {"value" : "EUR"}
+          },
+          "cashflowType": "Fee"
+        }]
+      }],
+      "effectiveDate": "2018-11-09",
+      "eventIdentifier": [{
+        "issuerReference": {"reference" : "UNKNOWN"},
+        "assignedIdentifier": [{
+          "version": 1,
+          "identifier": {"value" : "A3DGR0BRBL"}
+        }]
+      }],
+      "action": "New"
+    },
+    "contractReference": "60d762ec"
+  }
+}

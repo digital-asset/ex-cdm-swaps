@@ -1,0 +1,72 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Workflow.DeriveEvents where
+
+import Org.Isda.Cdm.EventSpecificationModule as Cdm hiding (Party, Trigger, exercise, RefData)
+import Main.Event.Instance
+import Main.Market.Contract
+import Main.MasterAgreement
+import Main.ReferenceData
+import Main.Types
+import Main.Utils.Cdm
+import Main.Utils.Common
+
+-- | Workflow to derive all events for a given (CDM) contract
+template DeriveEventsWorkflow
+  with
+    sig      : Party
+  where
+    signatory sig
+
+    controller sig can
+      nonconsuming Trigger: [ContractId DerivedEvent]
+        with
+          ciCid     : ContractId ContractInstance
+          fromDate  : Optional Date
+          toDate    : Optional Date
+          refData   : RefData
+        do
+          ci <- fetch ciCid
+          pastEvents <- mapA (\enCid -> do en <- fetch enCid; return en.d) ci.lifecycleEventCids
+          let spec = DerivedSpec with contract = ci.d, ..
+          events <- mapA setEventRosettaKey =<< (flip Cdm.buildDerivedEvents) spec <$> toCdmRefData refData
+
+          contractIdentifier <-
+            (\p -> findIdentifierByParty p ci.d.contractIdentifier)
+            =<< (fromSomeTry "party not found" $ find (\ciSig -> ciSig.p == sig) ci.ps)
+
+          mapA (\event -> create DerivedEvent with d = event, ps = ci.ps, ..) events
+
+-- | A CDM event that was derived from a contract but serves as information only.
+-- In particular, the event might still be subject to changes if, e.g., underlying
+-- holiday calendars change.
+template DerivedEvent
+  with
+    sig                : Party
+    contractIdentifier : Identifier
+      -- ^ The identifer of the (CDM) contract this event belongs to
+    ps                 : [PartyWithId]
+      -- ^ Parties (including an id to link to party data in d.party) involved in the event
+    d                  : Event
+      -- ^ The CDM event
+  where
+    signatory sig
+    ensure checkParties ps d.party
+
+    controller sig can
+      --Create the event by using the master agreement
+      CreateEvent: ContractId EventInstance
+        with
+          maCid   : ContractId MasterAgreementInstance
+          ciCid   : ContractId ContractInstance
+          refData : RefData
+        do
+          ci <- fetch ciCid
+          assertMsg "expecing matching contract" (contractIdentifier `elem` ci.d.contractIdentifier)
+
+          ma <- fetch maCid
+          if ma.p1 == sig then exercise maCid CreateDerivedEvent1 with event = d, ciCid, refData
+          else if ma.p2 == sig then exercise maCid CreateDerivedEvent2 with event = d, ciCid, refData
+          else abort "party not part of master agreement"

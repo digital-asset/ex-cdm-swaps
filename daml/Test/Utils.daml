@@ -1,0 +1,79 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Test.Utils where
+
+import DA.Date as D
+import Org.Isda.Cdm.EventSpecificationModule as Cdm hiding (exercise)
+import Main.MasterAgreement
+import Main.ReferenceData
+import Test.ExampleData.Counterparty
+import Prelude as Daml
+
+fromLeftS : Text -> Either a b -> Scenario a
+fromLeftS _ (Left x) = return x
+fromLeftS msg (Right _) = abort msg
+
+fromRightS : Text -> Either a b -> Scenario b
+fromRightS msg (Left _) = abort msg
+fromRightS _ (Right x) = return x
+
+getPartyData : Counterparty -> Cdm.Party
+getPartyData cp =
+  Cdm.Party with
+    id = Some cp.partyId
+    name = Some $ fieldWithEmptyMeta cp.name
+    account = Some Cdm.Account with
+      id = None
+      accountBeneficiary = None
+      accountName = None
+      servicingParty = None
+      accountNumber = fieldWithEmptyMeta cp.account
+      accountType = None
+    partyId = [fieldWithEmptyMeta cp.partyId]
+    person = []
+
+getPartyId : Counterparty -> Text
+getPartyId cp = cp.partyId
+
+createHolidayCalendarInstance : Scenario HolidayCalendarInstance -> Scenario (ContractId HolidayCalendarInstance)
+createHolidayCalendarInstance hciS = do
+  hci <- hciS
+  submit hci.publisher do create hci
+
+createMasterAgreement : (Daml.Party, Daml.Party) -> Scenario (ContractId MasterAgreementInstance)
+createMasterAgreement (p1, p2) = do
+  proposal <- submit p1 do create MasterAgreementProposal with p1, p2
+  submit p2 do exercise proposal Accept
+
+emptyBaseEvent : BaseEvent
+emptyBaseEvent = BaseEvent with
+                  id = None
+                  account = []
+                  action = ActionEnum_New
+                  effectiveDate = None
+                  eventDate = D.date 1970 Jan 1
+                  eventIdentifier = []
+                  messageInformation = None
+                  timestamp = []
+                  transfer = []
+
+fieldWithEmptyMeta : a -> FieldWithMeta a
+fieldWithEmptyMeta v = FieldWithMeta with
+                        value = v
+                        meta = MetaFields with
+                          reference = None
+                          scheme = None
+                          id = None
+
+referenceWithEmptyMeta : Text -> ReferenceWithMeta a
+referenceWithEmptyMeta ref = ReferenceWithMeta
+                              { reference = Some ref
+                              , value = None
+                              , meta = MetaFields
+                                  { reference = None
+                                  , scheme = None
+                                  , id = None
+                                  }
+                              }

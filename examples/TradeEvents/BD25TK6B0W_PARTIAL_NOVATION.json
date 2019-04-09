@@ -1,0 +1,197 @@
+{
+  "choice": "ProposePartialNovation",
+  "argument": {
+    "ps": [{
+      "id": "8153870222725",
+      "p": "DEALER-D03"
+    },{
+      "id": "5264151754007",
+      "p": "CCP-P01"
+    },{
+      "id": "7223404662293",
+      "p": "CLIENT-C02"
+    }],
+    "base": {
+      "action" : "New",
+      "effectiveDate" : "2018-11-02",
+      "eventDate" : "2018-11-01",
+      "eventIdentifier": [{
+        "issuerReference": {"reference" : "UNKNOWN"},
+        "assignedIdentifier": [{
+          "version": 1,
+          "identifier": {"value" : "PQVFJOB6XP"}
+        }]
+      }],
+      "transfer": [{
+        "rosettaKey": "3ea7a461",
+        "settlementDate": {
+          "unadjustedDate": "2018-11-02"
+        },
+        "status": "Pending",
+        "cashTransfer": [{
+          "payerReceiver": {
+            "payerPartyReference": {"reference" : "8153870222725"},
+            "receiverPartyReference": {"reference" : "7223404662293"}
+          },
+          "amount": {
+            "amount": 10000,
+            "currency": {"value" : "EUR"}
+          },
+          "cashflowType": "Fee"
+        }]
+      }]
+    },
+    "change": [ {
+      "notionalSchedule" : {
+        "notionalStepSchedule" : {
+          "initialValue" : 5000000,
+          "currency" : {"value" : "EUR"}
+        }
+      }
+    } ],
+    "contractNew" : {
+      "contractIdentifier": [{
+        "issuerReference": {
+          "reference": "7223404662293"
+        },
+        "assignedIdentifier": [{
+          "version": 1,
+          "identifier": {
+            "value": "WB5LKLZICM"
+          }
+        }]
+      }, {
+        "issuerReference": {
+          "reference": "5264151754007"
+        },
+        "assignedIdentifier": [{
+          "version": 1,
+          "identifier": {
+            "value": "WB5LKLZICM"
+          }
+        }]
+      }],
+      "tradeDate": {
+        "date": "2018-10-01"
+      },
+      "rosettaKey": "9fdc0ede",
+      "party": [{
+        "id": "7223404662293",
+        "name": {
+          "value": "CLIENT-C02"
+        },
+        "partyId": [{
+          "value": "7223404662293"
+        }],
+        "account": {
+          "accountNumber": {
+            "value": "C02217748782"
+          }
+        }
+      }, {
+        "id": "5264151754007",
+        "name": {
+          "value": "CCP-P01"
+        },
+        "partyId": [{
+          "value": "5264151754007"
+        }],
+        "account": {
+          "accountNumber": {
+            "value": "P01547927812"
+          }
+        }
+      }],
+      "contractualProduct": {
+        "productIdentification": {
+          "primaryAssetClass": {
+            "value": "Credit"
+          },
+          "productQualifier": "Credit_Default_Swap_Index"
+        },
+        "economicTerms": {
+          "rosettaKeyValue": "ca117986",
+          "payout": {
+            "creditDefaultPayout": {
+              "protectionTerms": [{
+                "notionalAmount": {
+                  "amount": 5000000,
+                  "currency": {
+                    "value": "EUR"
+                  }
+                }
+              }],
+              "rosettaKey": "8f750a40",
+              "generalTerms": {
+                "dateAdjustments": {
+                  "businessCenters": {
+                    "businessCenter": [{
+                      "value": "EUTA"
+                    }]
+                  },
+                  "businessDayConvention": "FOLLOWING"
+                },
+                "indexReferenceInformation": {
+                  "indexName": {
+                    "value": "iTraxx Europe Crossover Series 29 Version 1"
+                  },
+                  "indexSeries": 29
+                },
+                "buyerSeller": {
+                  "buyerPartyReference": {
+                    "reference": "7223404662293"
+                  },
+                  "sellerPartyReference": {
+                    "reference": "5264151754007"
+                  }
+                }
+              }
+            },
+            "interestRatePayout": [{
+              "quantity": {
+                "notionalSchedule": {
+                  "notionalStepSchedule": {
+                    "initialValue": 5000000,
+                    "currency": {
+                      "value": "EUR"
+                    }
+                  }
+                }
+              },
+              "rosettaKey": "25871ee8",
+              "dayCountFraction": {
+                "value": "ACT_360"
+              },
+              "rateSpecification": {
+                "fixedRate": {
+                  "initialValue": 0.050000
+                }
+              },
+              "calculationPeriodDates": {
+                "effectiveDate": {
+                  "adjustableDate": {
+                    "unadjustedDate": "2018-11-02"
+                  }
+                },
+                "terminationDate": {
+                  "adjustableDate": {
+                    "unadjustedDate": "2028-12-20"
+                  }
+                }
+              },
+              "payerReceiver": {
+                "payerPartyReference": {
+                  "reference": "7223404662293"
+                },
+                "receiverPartyReference": {
+                  "reference": "5264151754007"
+                }
+              }
+            }]
+          }
+        }
+      }
+    },
+    "contractReference" : "974bd059"
+  }
+}

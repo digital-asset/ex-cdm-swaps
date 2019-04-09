@@ -1,0 +1,55 @@
+{
+  "choice": "ProposePartialTermination",
+  "argument": {
+    "ps": [{
+      "id": "5454121752721",
+      "p": "DEALER-D01"
+    }, {
+      "id": "5264151754007",
+      "p": "CCP-P01"
+    }],
+    "base": {
+      "timestamp": [{
+        "dateTime": "2018-11-02T10:55:50.105+00:00[UTC]",
+        "qualification": "eventCreationDateTime"
+      }],
+      "eventDate": "2018-11-02",
+      "transfer": [{
+        "rosettaKey": "24992073",
+        "settlementDate": {
+          "unadjustedDate": "2018-11-05"
+        },
+        "status": "Pending",
+        "cashTransfer": [{
+          "payerReceiver": {
+            "payerPartyReference": {"reference" : "5454121752721"},
+            "receiverPartyReference": {"reference" : "5264151754007"}
+          },
+          "amount": {
+            "amount": 10000,
+            "currency": {"value" : "USD"}
+          },
+          "cashflowType": "Fee"
+        }]
+      }],
+      "effectiveDate": "2018-11-05",
+      "eventIdentifier": [{
+        "issuerReference": {"reference" : "UNKNOWN"},
+        "assignedIdentifier": [{
+          "version": 1,
+          "identifier": {"value" : "OU9KRUXTN4"}
+        }]
+      }],
+      "action": "New"
+    },
+    "change": [{
+      "notionalSchedule": {
+        "notionalStepSchedule": {
+          "initialValue": 450000000.00,
+          "currency": {"value" : "USD"}
+        }
+      }
+    }],
+    "contractReference": "81e90d9b"
+  }
+}

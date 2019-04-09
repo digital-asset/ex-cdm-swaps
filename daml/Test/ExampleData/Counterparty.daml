@@ -1,0 +1,48 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Test.ExampleData.Counterparty where
+
+data Counterparty = Counterparty
+  with
+    damlParty : Party
+    partyId : Text
+    account : Text
+    name : Text
+
+p01_1 : Scenario Counterparty
+p01_1 = do
+  damlParty <- getParty "CCP-P01"
+  return Counterparty with
+          damlParty
+          partyId = "5264151754007"
+          account = "P01547927812"
+          name = "CCP-P01"
+
+d02_2 : Scenario Counterparty
+d02_2 = do
+  damlParty <- getParty "DEALER-D02"
+  return Counterparty with
+          damlParty
+          partyId = "5828082809415"
+          account = "D02024214214"
+          name = "DEALER-D02"
+
+d03_5 : Scenario Counterparty
+d03_5 = do
+  damlParty <- getParty "DEALER-D03"
+  return Counterparty with
+          damlParty
+          partyId = "9377538274179"
+          account = "D03225622378"
+          name = "DEALER-D03"
+
+c04_4 : Scenario Counterparty
+c04_4 = do
+  damlParty <- getParty "CLIENT-C04"
+  return Counterparty with
+          damlParty
+          partyId = "4318139146432"
+          account = "C04021606809"
+          name = "CLIENT-C04"

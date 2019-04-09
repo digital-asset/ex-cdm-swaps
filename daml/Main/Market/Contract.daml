@@ -1,0 +1,24 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Market.Contract where
+
+import Org.Isda.Cdm.EventSpecificationModule (Contract)
+import Main.Event.Notification
+import Main.Types
+import Main.Utils.Cdm
+
+-- | A CDM contract
+template ContractInstance
+  with
+    ps                  : [PartyWithId]
+      -- ^ Parties (including an id to link to party data in d.party) involved in the event
+    d                   : Contract
+      -- ^ The CDM contract
+    lifecycleEventCids  : [ContractId EventNotification]
+      -- ^ Lifecycle / Trade events (e.g. reset and cash transfer events) that have been applied
+      -- to the contract
+  where
+    signatory map (\sig -> sig.p) ps
+    ensure checkParties ps d.party

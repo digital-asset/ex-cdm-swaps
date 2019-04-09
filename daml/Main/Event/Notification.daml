@@ -1,0 +1,20 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Event.Notification where
+
+import Org.Isda.Cdm.EventSpecificationModule (Event)
+import Main.Types
+import Main.Utils.Cdm
+
+-- | A CDM event that has been applied
+template EventNotification
+  with
+    ps  : [PartyWithId]
+      -- ^ Parties (including an id to link to party data in d.party) involved in the event
+    d   : Event
+      -- ^ The CDM event
+  where
+    signatory map (\sig -> sig.p) ps
+    ensure checkParties ps d.party

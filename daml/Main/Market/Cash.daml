@@ -1,0 +1,152 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Market.Cash where
+
+import DA.Action
+import DA.List
+import DA.Optional
+import Org.Isda.Cdm.EventSpecificationModule as Cdm (CashTransferComponent, Party, Account)
+import Main.Types
+import Main.Utils.Cdm
+import Main.Utils.Common
+import Prelude as Daml
+
+data SplitResult = SplitResult
+  with
+    splitCid : ContractId Cash
+    restCid  : ContractId Cash
+
+template Cash
+  with
+    issuer   : Daml.Party
+    owner    : Daml.Party
+    account  : Text
+    currency : Text
+    amount   : Decimal
+  where
+    signatory [issuer, owner]
+    ensure amount > 0.0
+
+    controller owner can
+      Transfer: ContractId CashTransferRequest
+        with newOwner : Daml.Party
+        do create CashTransferRequest with
+                    issuer
+                    sender = owner
+                    receiver = newOwner
+                    accountFrom = account
+                    currency
+                    amount
+
+      Split: SplitResult
+        with splitAmount: Decimal
+        do
+          assertMsg "splitAmount positive" (splitAmount > 0.0)
+          splitCid <- create this with amount = splitAmount
+          restCid <- create this with amount = amount - splitAmount
+          return SplitResult with splitCid, restCid
+
+      Merge: ContractId Cash
+        with otherCid: ContractId Cash
+        do
+          other <- fetch otherCid
+          assertMsg "issuer doesn't match" (issuer == other.issuer)
+          assertMsg "owner doesn't match" (owner == other.owner)
+          assertMsg "currency doesn't match" (currency == other.currency)
+
+          transferCid <- exercise otherCid Transfer with newOwner = issuer
+          transferCid <- exercise transferCid Accept with accountTo = account
+          archive transferCid
+          create this with amount = amount + other.amount
+
+template CashTransferRequest
+  with
+    issuer      : Daml.Party
+    sender      : Daml.Party
+    receiver    : Daml.Party
+    accountFrom : Text
+    currency    : Text
+    amount      : Decimal
+  where
+    signatory [issuer, sender]
+    ensure amount > 0.0
+
+    controller receiver can
+      Accept: ContractId Cash
+        with accountTo : Text
+        do create Cash with issuer; owner = receiver; account = accountTo; currency; amount
+
+      Reject: ContractId Cash
+        do create Cash with issuer; owner = sender; account = accountFrom; currency; amount
+
+    controller sender can
+      Withdraw: ContractId Cash
+        do create Cash with issuer; owner = sender; account = accountFrom; currency; amount
+
+-- | The cash transfer instruction data
+data CashTransferInstructionData = CashTransferInstructionData
+  with
+    cashTransfer    : CashTransferComponent
+      -- ^ The CDM cash transfer
+    party           : [Cdm.Party]
+      -- ^ The party data of the CDM cash transfer
+    account         : [Account]
+      -- ^ The account data of the CDM cash transfer
+    eventReference  : Text
+      -- ^ The reference to the event that has generated the cash transfer instruction
+  deriving (Eq, Show)
+
+-- | An instruction to transfer cash from one party to the other. Cash needs to be
+-- allocated by the payer.
+template CashTransferInstruction
+  with
+    ps                : [PartyWithId]
+      -- ^ Parties (including an id to link to party data in d.party) involved in the cash transfer
+    d                 : CashTransferInstructionData
+      -- ^ The cash transfer instruction data
+    allocatedCashCid  : Optional (ContractId Cash)
+      -- ^ Allocated cash
+  where
+    signatory map (\sig -> sig.p) ps
+    ensure checkParties ps d.party
+
+    let payerParty =
+          (\pWithId -> pWithId.p)
+          $ fromSome
+          $ find (\pWithId -> getReference this.d.cashTransfer.payerReceiver.payerPartyReference == pWithId.id)
+          this.ps
+
+    -- Allocate cash by payer
+    controller payerParty can
+      Allocate: ContractId CashTransferInstruction
+        with cashCid: ContractId Cash
+        do
+          cash <- fetch cashCid
+          payerPartyData <- findPartyDataByReference d.cashTransfer.payerReceiver.payerPartyReference d.party
+          payerParty     <- findPartyByReference d.cashTransfer.payerReceiver.payerPartyReference ps
+          payerAccount   <- findAccount d.cashTransfer.payerReceiver.payerAccountReference payerPartyData d.account
+
+          assertMsg "cash not allocated" (isNone allocatedCashCid)
+          assertMsg "cash owner matches" (cash.owner == payerParty.p)
+          assertMsg "amount matches" (cash.amount == d.cashTransfer.amount.amount)
+          assertMsg "currency matches" (cash.currency == d.cashTransfer.amount.currency.value)
+          assertMsg "account matches" (cash.account == payerAccount.accountNumber.value)
+
+          create this with allocatedCashCid = Some cashCid
+
+-- | Function to settle the cash transfer instruction
+settle : (ContractId CashTransferInstruction) -> Update (ContractId Cash)
+settle instructionCid = do
+  instruction <- fetchAndArchive instructionCid
+
+  cashCid <- fromSomeTry "cash allocated" instruction.allocatedCashCid
+  cash <- fetch cashCid
+
+  receiverPartyData <- findPartyDataByReference instruction.d.cashTransfer.payerReceiver.receiverPartyReference instruction.d.party
+  receiverParty     <- findPartyByReference instruction.d.cashTransfer.payerReceiver.receiverPartyReference instruction.ps
+  receiverAccount   <- findAccount instruction.d.cashTransfer.payerReceiver.payerAccountReference receiverPartyData instruction.d.account
+
+  transferCid <- exercise cashCid Transfer with newOwner = receiverParty.p
+  exercise transferCid Accept with accountTo = receiverAccount.accountNumber.value

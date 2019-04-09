@@ -1,0 +1,54 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.Event.Proposal where
+
+import Org.Isda.Cdm.EventSpecificationModule (Event)
+import Main.Event.Instance
+import Main.Types
+import Main.Utils.Common
+
+-- | A CDM event that has been proposed but not accepted by all parties involved yet
+template EventProposal
+  with
+    d     : Event
+      -- ^ The CDM event
+    ps    : [PartyWithId]
+      -- ^ Parties (including an id to link to party data in d.party) involved in the event
+    sigs  : [Party]
+      -- Parties that have already signed the proposal
+  where
+    signatory sigs
+
+    -- Accept event by first party
+    controller [getFirstParty ps] can
+      Accept1: Either (ContractId EventProposal) (ContractId EventInstance)
+        do accept this (getFirstParty ps)
+
+    -- Accept event by second party
+    controller [getSecondParty ps] can
+      Accept2: Either (ContractId EventProposal) (ContractId EventInstance)
+        do accept this (getSecondParty ps)
+
+    -- Accept event by third party
+    controller [getThirdParty ps] can
+      Accept3: Either (ContractId EventProposal) (ContractId EventInstance)
+        do accept this (getThirdParty ps)
+
+    -- Accept event by fourth party
+    controller [getFourthParty ps] can
+      Accept4: Either (ContractId EventProposal) (ContractId EventInstance)
+        do accept this (getFourthParty ps)
+
+accept : EventProposal -> Party -> Update (Either (ContractId EventProposal) (ContractId EventInstance))
+accept ep sigNew = do
+  assertMsg ("Party " <> show sigNew <> " has signed already") (not (any ((==) sigNew) ep.sigs))
+
+  if all (\p -> any ((==) p.p) (sigNew :: ep.sigs)) ep.ps
+  then do
+    cid <- create EventInstance with ps = ep.ps, d = ep.d
+    return $ Right cid
+  else do
+    cid <- create ep with sigs = sigNew :: ep.sigs
+    return $ Left cid

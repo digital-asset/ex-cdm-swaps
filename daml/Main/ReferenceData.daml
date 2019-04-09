@@ -1,0 +1,44 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+daml 1.2
+module Main.ReferenceData where
+
+import qualified Org.Isda.Cdm.EventSpecificationModule as Cdm
+
+template ObservationInstance
+  with
+    d         : Cdm.ObservationPrimitive
+    publisher : Party
+    observers : [Party]
+  where
+    signatory publisher
+    observer observers
+
+template HolidayCalendarInstance
+  with
+    d         : Cdm.HolidayCalendarData
+    publisher : Party
+    observers : [Party]
+  where
+    signatory publisher
+    observer observers
+
+data RefData = RefData
+  with
+    holidayCalendarCids : [ContractId HolidayCalendarInstance]
+    observationCids     : [ContractId ObservationInstance]
+  deriving (Show, Eq)
+
+emptyRefData : RefData
+emptyRefData = RefData with
+                  holidayCalendarCids = []
+                  observationCids     = []
+
+toCdmRefData : RefData -> Update Cdm.RefData
+toCdmRefData refData = do
+  hcs <- mapA (\hcCid -> do hc <- fetch hcCid; return hc.d) refData.holidayCalendarCids
+  obs <- mapA (\obsCid -> do obs <- fetch obsCid; return obs.d) refData.observationCids
+  return Cdm.RefData with
+          holidayCalendars = hcs
+          observations = obs
