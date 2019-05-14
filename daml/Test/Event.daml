@@ -9,7 +9,7 @@ import DA.List
 import DA.Optional
 import Org.Isda.Cdm.EventSpecificationModule hiding (exercise, Trigger)
 import Main.Event.Instance
-import Main.Event.Proposal
+import Main.Event.Proposal as EP
 import Main.Market.Cash as Cash
 import Main.MasterAgreement
 import Main.Workflow.Allocate as AllocateWorkflow
@@ -51,9 +51,9 @@ test_Inception = scenario do
 
   -- Execution
   passToDate $ D.date 2018 Sep 24
-  epCid <- submit p1.p do exercise maCid ProposeNewTrade1 with ps = [p1, p2], base, after
-  eiCid <- fromRightS "Unknown error" =<< (submit p2.p do exercise epCid Accept2)
-  res <- submit p1.p do exercise eiCid Lifecycle1 with ciCids = [], ctiCids = []
+  epCid <- submit p1.p do exercise maCid ProposeNewTrade with exerciser = p1.p, ps = [p1, p2], base, after
+  eiCid <- fromRightS "Unknown error" =<< (submit p2.p do exercise epCid EP.Accept with exerciser = p2.p)
+  res <- submit p1.p do exercise eiCid Lifecycle with exerciser = p1.p, ciCids = [], ctiCids = []
 
   en <- submit p1.p do fetch res.enCid
   return (maCid, res, en)
@@ -80,9 +80,9 @@ test_Termination = scenario do
                 ]
   -- Execution
   passToDate $ D.date 2019 Sep 25
-  epCid <- submit p1.p do exercise maCid ProposeTermination1 with ps = [p1, p2], base, ciCid = head inceptionResult.ciCids
-  eiCid <- fromRightS "Unknown error" =<< (submit p2.p do exercise epCid Accept2)
-  submit p1.p do exercise eiCid Lifecycle1 with ciCids = inceptionResult.ciCids, ctiCids = []
+  epCid <- submit p1.p do exercise maCid ProposeTermination with exerciser = p1.p, ps = [p1, p2], base, ciCid = head inceptionResult.ciCids
+  eiCid <- fromRightS "Unknown error" =<< (submit p2.p do exercise epCid EP.Accept with exerciser = p2.p)
+  submit p1.p do exercise eiCid Lifecycle with exerciser = p1.p, ciCids = inceptionResult.ciCids, ctiCids = []
 
   return ()
 
@@ -114,11 +114,11 @@ test_Novation = scenario do
 
   -- Execution
   passToDate $ D.date 2019 Sep 30
-  epCid <- submit p1.p do exercise maCid ProposeNovation1 with ps = [p1, p2, p3, p4], ciCid = head inceptionResult.ciCids, ..
-  epCid <- fromLeftS "Unknown error" =<< (submit p2.p do exercise epCid Accept2)
-  epCid <- fromLeftS "Unknown error" =<< (submit p3.p do exercise epCid Accept3)
-  eiCid <- fromRightS "Unknown error" =<< (submit p4.p do exercise epCid Accept4)
-  submit p1.p do exercise eiCid Lifecycle1 with ciCids = inceptionResult.ciCids, ctiCids = []
+  epCid <- submit p1.p do exercise maCid ProposeNovation with exerciser = p1.p, ps = [p1, p2, p3, p4], ciCid = head inceptionResult.ciCids, ..
+  epCid <- fromLeftS "Unknown error" =<< (submit p2.p do exercise epCid EP.Accept with exerciser = p2.p)
+  epCid <- fromLeftS "Unknown error" =<< (submit p3.p do exercise epCid EP.Accept with exerciser = p3.p)
+  eiCid <- fromRightS "Unknown error" =<< (submit p4.p do exercise epCid EP.Accept with exerciser = p4.p)
+  submit p1.p do exercise eiCid Lifecycle with exerciser = p1.p, ciCids = inceptionResult.ciCids, ctiCids = []
 
   return ()
 
@@ -155,13 +155,13 @@ test_Derived = scenario do
   eiCid <- submit p1.p do exercise (head edCids) CreateEvent with maCid, ciCid, refData
 
   -- Instruct transfers
-  instructResult <- submit p1.p do exercise eiCid Instruct1
+  instructResult <- submit p1.p do exercise eiCid Instruct with exerciser = p1.p
 
   -- Allocate cash
   awCid <- submit p2.p do create AllocateWorkflow with sig = p2.p
   allocResult <- submit p2.p do exercise awCid AllocateWorkflow.Trigger with ctiCids = (head instructResult.ctiCids), cashCids = [cashCid]
 
   -- Lifecycle
-  submit p1.p do exercise instructResult.eiCid Lifecycle1 with ciCids = [ciCid], ctiCids = [allocResult.ctiCids]
+  submit p1.p do exercise instructResult.eiCid Lifecycle with exerciser = p1.p, ciCids = [ciCid], ctiCids = [allocResult.ctiCids]
 
   return ()

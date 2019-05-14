@@ -9,7 +9,7 @@ import * as UICore from '@da/ui-core';
 // ------------------------------------------------------------------------------------------------
 export const version = {
   schema: 'navigator-config',
-  major: 1,
+  major: 2,
   minor: 0,
 };
 

@@ -7,7 +7,7 @@ module Main.Event.Proposal where
 import Org.Isda.Cdm.EventSpecificationModule (Event)
 import Main.Event.Instance
 import Main.Types
-import Main.Utils.Common
+import Main.Utils.Cdm
 
 -- | A CDM event that has been proposed but not accepted by all parties involved yet
 template EventProposal
@@ -20,35 +20,22 @@ template EventProposal
       -- Parties that have already signed the proposal
   where
     signatory sigs
+    observer map (\sig -> sig.p) ps
+    ensure checkParties ps d.party
 
-    -- Accept event by first party
-    controller [getFirstParty ps] can
-      Accept1: Either (ContractId EventProposal) (ContractId EventInstance)
-        do accept this (getFirstParty ps)
+    -- Accept event
+    choice Accept: Either (ContractId EventProposal) (ContractId EventInstance)
+      with
+        exerciser: Party
+      controller exerciser
+      do
+        assertMsg "exerciser exists" $ any (\p -> p.p == exerciser) ps
+        assertMsg ("Party " <> show exerciser <> " has signed already") (not (any ((==) exerciser) sigs))
 
-    -- Accept event by second party
-    controller [getSecondParty ps] can
-      Accept2: Either (ContractId EventProposal) (ContractId EventInstance)
-        do accept this (getSecondParty ps)
-
-    -- Accept event by third party
-    controller [getThirdParty ps] can
-      Accept3: Either (ContractId EventProposal) (ContractId EventInstance)
-        do accept this (getThirdParty ps)
-
-    -- Accept event by fourth party
-    controller [getFourthParty ps] can
-      Accept4: Either (ContractId EventProposal) (ContractId EventInstance)
-        do accept this (getFourthParty ps)
-
-accept : EventProposal -> Party -> Update (Either (ContractId EventProposal) (ContractId EventInstance))
-accept ep sigNew = do
-  assertMsg ("Party " <> show sigNew <> " has signed already") (not (any ((==) sigNew) ep.sigs))
-
-  if all (\p -> any ((==) p.p) (sigNew :: ep.sigs)) ep.ps
-  then do
-    cid <- create EventInstance with ps = ep.ps, d = ep.d
-    return $ Right cid
-  else do
-    cid <- create ep with sigs = sigNew :: ep.sigs
-    return $ Left cid
+        if all (\p -> any ((==) p.p) (exerciser :: sigs)) ps
+        then do
+          cid <- create EventInstance with ps = ps, d = d
+          return $ Right cid
+        else do
+          cid <- create this with sigs = exerciser :: sigs
+          return $ Left cid

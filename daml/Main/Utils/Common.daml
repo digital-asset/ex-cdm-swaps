@@ -12,25 +12,6 @@ createCidD dCid = do
   d <- fetch dCid
   return ContractIdData with ..
 
--- | Get first daml party
-getFirstParty : [PartyWithId] -> Party
-getFirstParty (x::_) = x.p
-
--- | Get second daml party (default to first if not available)
-getSecondParty : [PartyWithId] -> Party
-getSecondParty (_::x::_) = x.p
-getSecondParty xs = getFirstParty xs
-
--- | Get thrid daml party (default to first if not available)
-getThirdParty : [PartyWithId] -> Party
-getThirdParty (_::_::x::_) = x.p
-getThirdParty xs = getFirstParty xs
-
--- | Get fourth daml party (default to first if not available)
-getFourthParty : [PartyWithId] -> Party
-getFourthParty (_::_::_::x::_) = x.p
-getFourthParty xs = getFirstParty xs
-
 -- | Try to get value from optional (fails if None)
 fromSomeTry : Text -> Optional a -> Update a
 fromSomeTry _ (Some x) = return x

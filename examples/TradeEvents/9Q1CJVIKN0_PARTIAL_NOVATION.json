@@ -13,8 +13,8 @@
     }],
     "base": {
       "action" : "New",
-      "effectiveDate" : "2018-11-12",
-      "eventDate" : "2018-11-13",
+      "effectiveDate" : "2018-11-13",
+      "eventDate" : "2018-11-12",
       "eventIdentifier": [{
         "issuerReference": {"reference" : "UNKNOWN"},
         "assignedIdentifier": [{

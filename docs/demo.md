@@ -38,9 +38,9 @@ The first part of the demo deals with negotiated events where all parties involv
 
     to load around 50 new trade events. The `DemoBot` auto-accepts all events except two.
 
-2. Log in as CCP-P01, go to `Event_NewTrade`, and accept the proposed new trade event for contract `CAXMKVEHOV-1` by exercising the `Accept2` choice. This changes the status of the event to `Applied`.
+2. Log in as CCP-P01, go to `Event_NewTrade`, and accept the proposed new trade event for contract `CAXMKVEHOV-1` by exercising the `Accept` choice. This changes the status of the event to `Applied`.
 
-3. Note that the new trade event for contract `QZPRYFPGA1-1`was proposed by CPP-P01 but is pending the acceptance of CLIENT-C04. Log in as CLIENT-C04 and accept the event by exercising the `Accept2` choice. Note that all contracts are now available in the `Market_Contract` tab.
+3. Note that the new trade event for contract `QZPRYFPGA1-1`was proposed by CPP-P01 but is pending the acceptance of CLIENT-C04. Log in as CLIENT-C04 and accept the event by exercising the `Accept` choice. Note that all contracts are now available in the `Market_Contract` tab.
 
 4. Log in as CCP-P01 again and notice that the event is applied as well.
 
@@ -54,9 +54,9 @@ The first part of the demo deals with negotiated events where all parties involv
 
 2. Log in as CCP-P01 and inspect the termination (`Event_Termination`) and novation (`Event_Novation`) events.
 
-3. Log in as DEALER-D03 and exercise the `Accept3` choice of the novation event. Note that the event is still in the proposed status because it has not been accepted by all parties yet.
+3. Log in as DEALER-D03 and exercise the `Accept` choice of the novation event. Note that the event is still in the proposed status because it has not been accepted by all parties yet.
 
-3. Log in as CLIENT-C03 and exercise the `Accept2` choice of the termination and novation event. Both events are now accepted by all parties. Note though that it has not been applied yet because the ledger time is still before the event`s effective time.
+3. Log in as CLIENT-C03 and exercise the `Accept` choice of the termination and novation event. Both events are now accepted by all parties. Note though that it has not been applied yet because the ledger time is still before the event`s effective time.
 
 5. Move the ledger time by one day and notice that the events get applied. Go to the `Market_Contract` tab to see that contract `BHNAFG4NEC` is terminated and has version 2.
 

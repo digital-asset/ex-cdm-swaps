@@ -119,21 +119,14 @@ class DataLoading(party: String, client: LedgerClient, schema: Schema) {
     val argEnriched = enrichArg(arg)
 
     val choice = data.get("choice").getAsString
-    val argRecord = decoder.decode(argEnriched, choice + "1")
+    val argRecord = decoder.decode(argEnriched, choice)
 
     val parties = argRecord.getList[Record]("ps").map(_.get[Party]("p").getValue)
     val maO = Cdm.findMasterAgreement(parties, mas.getData())
 
     maO match {
       case Some(ma) =>
-        val cmd =
-          if (party == ma._2.get[Party]("p1").getValue)
-            new ExerciseCommand(client.getTemplateId("MasterAgreementInstance"), ma._1, choice + "1", argRecord)
-          else if (party == ma._2.get[Party]("p2").getValue)
-            new ExerciseCommand(client.getTemplateId("MasterAgreementInstance"), ma._1, choice + "2", argRecord)
-          else
-            throw new Exception("calling party not part of master agreement")
-
+        val cmd = new ExerciseCommand(client.getTemplateId("MasterAgreementInstance"), ma._1, choice, argRecord)
         client.sendCommands(party, List(cmd))
 
       case None =>
@@ -143,14 +136,15 @@ class DataLoading(party: String, client: LedgerClient, schema: Schema) {
 
   private def enrichArg(arg: JsonObject): JsonObject = {
     val argCloned = arg.deepCopy()
+    val argWithExerciser = arg.addGeneric("exerciser", party)
     if (arg.has("contractReference")) {
       val contractReference = arg.get("contractReference").getAsString
       val ciO = cis.getData().find(_._2.get[Record]("d").get[Text]("rosettaKey").getValue == contractReference)
       ciO match {
-        case Some(ci) => argCloned.addProperty("ciCid", ci._1)
+        case Some(ci) => argWithExerciser.addProperty("ciCid", ci._1)
         case None => logger.info("contract not found")
       }
     }
-    argCloned
+    argWithExerciser
   }
 }

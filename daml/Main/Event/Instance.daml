@@ -26,31 +26,26 @@ template EventInstance
     signatory map (\sig -> sig.p) ps
     ensure checkParties ps d.party
 
-    -- Instruct transfers by first party
-    controller [getFirstParty ps] can
-      Instruct1: InstructResult
-        do instruct this
+    -- Instruct transfers
+    choice Instruct: InstructResult
+      with
+        exerciser: Daml.Party
+      controller exerciser
+      do
+        assertMsg "exerciser exists" $ any (\p -> p.p == exerciser) ps
+        instruct this
 
-    -- Instruct transfers by second party
-    controller [getSecondParty ps] can
-      Instruct2: InstructResult
-        do instruct this
+    -- Lifecycle event (i.e. move contracts and cash)
+    choice Lifecycle: LifecycleResult
+      with
+        exerciser : Daml.Party
+        ciCids    : [ContractId ContractInstance]
+        ctiCids   : [[ContractId CashTransferInstruction]]
+      controller exerciser
+      do
+        assertMsg "party exists" $ any (\p -> p.p == exerciser) ps
+        lifecycle this ciCids ctiCids
 
-    -- Lifecycle event (i.e. move contracts and cash) by first party
-    controller [getFirstParty ps] can
-      Lifecycle1: LifecycleResult
-        with
-          ciCids  : [ContractId ContractInstance]
-          ctiCids : [[ContractId CashTransferInstruction]]
-        do lifecycle this ciCids ctiCids
-
-    -- Lifecycle event (i.e. move contracts and cash) by second party
-    controller [getSecondParty ps] can
-      Lifecycle2: LifecycleResult
-        with
-          ciCids  : [ContractId ContractInstance]
-          ctiCids : [[ContractId CashTransferInstruction]]
-        do lifecycle this ciCids ctiCids
 
 data InstructResult = InstructResult with
   eiCid   : ContractId EventInstance

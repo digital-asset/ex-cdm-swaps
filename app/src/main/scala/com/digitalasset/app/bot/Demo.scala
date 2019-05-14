@@ -78,30 +78,31 @@ class Demo(party: String, ledgerClient: LedgerClient, eventExclusionList: List[S
           val existingSigs = ep.getList[Party]("sigs").map(_.getValue)
           val missingSigs = allSigs.toSet -- existingSigs.toSet
 
-          if (missingSigs.nonEmpty && missingSigs.toList.head == party)
+          if (missingSigs.nonEmpty && missingSigs.toList.head == party) {
+            val arg = new Record(List(new Field("exerciser", new Party(party))).asJava)
             if (allSigs(0) == party) {
               logger.info("Accepting EventProposal " + ep.get[Record]("d").get[Text]("rosettaKey").getValue + "...")
-              Some(new ExerciseCommand(epTid, cId, "Accept1", Cdm.emptyArg))
+              Some(new ExerciseCommand(epTid, cId, "Accept", arg))
             }
 
             else if (allSigs(1) == party) {
               logger.info("Accepting EventProposal " + ep.get[Record]("d").get[Text]("rosettaKey").getValue + "...")
-              Some(new ExerciseCommand(epTid, cId, "Accept2", Cdm.emptyArg))
+              Some(new ExerciseCommand(epTid, cId, "Accept", arg))
             }
 
             else if (allSigs(2) == party) {
               logger.info("Accepting EventProposal " + ep.get[Record]("d").get[Text]("rosettaKey").getValue + "...")
-              Some(new ExerciseCommand(epTid, cId, "Accept3", Cdm.emptyArg))
+              Some(new ExerciseCommand(epTid, cId, "Accept", arg))
             }
 
             else if (allSigs(3) == party) {
               logger.info("Accepting EventProposal " + ep.get[Record]("d").get[Text]("rosettaKey").getValue + "...")
-              Some(new ExerciseCommand(epTid, cId, "Accept4", Cdm.emptyArg))
+              Some(new ExerciseCommand(epTid, cId, "Accept", arg))
             }
 
             else
               None
-          else
+          } else
             None
         case _ => None
       }

@@ -65,8 +65,4 @@ template DerivedEvent
         do
           ci <- fetch ciCid
           assertMsg "expecing matching contract" (contractIdentifier `elem` ci.d.contractIdentifier)
-
-          ma <- fetch maCid
-          if ma.p1 == sig then exercise maCid CreateDerivedEvent1 with event = d, ciCid, refData
-          else if ma.p2 == sig then exercise maCid CreateDerivedEvent2 with event = d, ciCid, refData
-          else abort "party not part of master agreement"
+          exercise maCid CreateDerivedEvent with exerciser = sig, event = d, ciCid, refData

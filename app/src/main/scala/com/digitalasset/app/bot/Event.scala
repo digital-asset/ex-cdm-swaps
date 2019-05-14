@@ -63,7 +63,8 @@ class Event(party: String, ledgerClient: LedgerClient) extends Bot(party, ledger
           val parties = ei.getList[Record]("ps").map(_.get[Party]("p").getValue)
 
           if (isPending(ei) && parties.head == party) {
-            val cmd = new ExerciseCommand(eiTid, eiCid, "Instruct1", Cdm.emptyArg)
+            val arg = new Record(List(new Field("exerciser", new Party(party))).asJava)
+            val cmd = new ExerciseCommand(eiTid, eiCid, "Instruct", arg)
 
             val eventTime = ei.get[Record]("d").get[Date]("eventDate").getValue.atStartOfDay.toInstant(ZoneOffset.UTC)
             if (ledgerTime.isAfter(eventTime) || ledgerTime.equals(eventTime)) {
@@ -90,10 +91,11 @@ class Event(party: String, ledgerClient: LedgerClient) extends Bot(party, ledger
             (ctiCidsO, ciCidsO) match {
               case (Some(ctiCids), Some(ciCids)) =>
                 val arg = new Record(List(
+                  new Field("exerciser", new Party(party)),
                   new Field("ciCids", new DamlList(ciCids.map(x => new ContractId(x)).asJava)),
                   new Field("ctiCids", new DamlList(ctiCids.map(x => new DamlList(x.asJava)).asJava))
                 ).asJava)
-                val cmd = new ExerciseCommand(eiTid, eiCid, "Lifecycle1", arg)
+                val cmd = new ExerciseCommand(eiTid, eiCid, "Lifecycle", arg)
 
                 val eventEffectiveTime = Cdm.getEffectiveDate(ei.get[Record]("d")).atStartOfDay.toInstant(ZoneOffset.UTC)
                 if(ledgerTime.isAfter(eventEffectiveTime) || ledgerTime.equals(eventEffectiveTime)) {
