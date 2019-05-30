@@ -5,7 +5,7 @@ package com.digitalasset.app.bot
 
 import java.util.concurrent.ConcurrentHashMap
 
-import com.daml.ledger.javaapi.components.LedgerViewFlowable
+import com.daml.ledger.rxjava.components.LedgerViewFlowable
 import com.daml.ledger.javaapi.data.Record.Field
 import com.daml.ledger.javaapi.data._
 import com.digitalasset.app.LedgerClient
@@ -43,15 +43,15 @@ class Cash(party: String, ledgerClient: LedgerClient) extends Bot(party, ledgerC
       }
 
       val cashFiltered = cash.filter { c =>
-        !ctis.exists(cti => cti._2.getOptional[ContractId[Template]]("allocatedCashCid").exists(_.getValue == c._1)) &&
+        !ctis.exists(cti => cti._2.getOptional[ContractId]("allocatedCashCid").exists(_.getValue == c._1)) &&
           c._2.get[Party]("owner").getValue == party
       }
 
       wAlloc match {
         case Some(w) if ctisFiltered.nonEmpty && cashFiltered.nonEmpty =>
           val arg = new Record(List(
-            new Field("ctiCids", new DamlList(ctisFiltered.map(x => new ContractId(x._1)).asJava)),
-            new Field("cashCids", new DamlList(cashFiltered.map(x => new ContractId(x._1)).asJava))
+            new Field("ctiCids", new DamlList(ctisFiltered.map(x => new ContractId(x._1).asInstanceOf[Value]).asJava)),
+            new Field("cashCids", new DamlList(cashFiltered.map(x => new ContractId(x._1).asInstanceOf[Value]).asJava))
           ).asJava)
           logger.info("Allocating...")
           List(new ExerciseCommand(wAllocTid, w._1, "Trigger", arg))

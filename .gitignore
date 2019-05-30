@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 .idea/
-*.iml
-**/.DS_Store
-.vscode/settings.json
-logs/
-sqlite/
-lib/
-*.log
-navigator.history
+.interfaces/
 .navigator.conf
+.package-database/
+.vscode/settings.json
+*.iml
+*.log
+**/.DS_Store
+dist/
+lib/
+logs/
+navigator.history
+sqlite/

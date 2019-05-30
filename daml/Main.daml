@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 daml 1.2
-module Setup where
+module Main where
 
 import Main.Market.Contract()
 import Main.Market.Cash()
@@ -13,5 +13,3 @@ import Main.MasterAgreement()
 import Main.ReferenceData()
 import Main.Workflow.Allocate()
 import Main.Workflow.DeriveEvents()
-
-empty = scenario do return ()

@@ -7,7 +7,7 @@ import java.time.LocalDate
 import java.util.stream.Collectors
 
 import com.daml.ledger.javaapi.data.{Record => RecordData}
-import com.daml.ledger.javaapi.data.{Date, DamlOptional, ToValue}
+import com.daml.ledger.javaapi.data.{Date, DamlOptional}
 
 import scala.collection.JavaConverters._
 
@@ -23,24 +23,24 @@ object Record {
     def getList[T](label: String): List[T] =
       r
         .getFields.listIterator.asScala.toList.find(p => p.getLabel.get == label).get
-        .getValue.asList[ToValue].get
+        .getValue.asList.get
         .getValues.stream
-        .map[T](x => x.toValue.asInstanceOf[T]).collect(Collectors.toList())
+        .map[T](x => x.asInstanceOf[T]).collect(Collectors.toList())
         .asScala.toList
 
     def getOptional[T](label: String): Option[T] = {
       val optValue = r
         .getFields.listIterator.asScala.toList.find(p => p.getLabel.get == label).get
-        .getValue.asInstanceOf[DamlOptional[ToValue]]
+        .getValue.asInstanceOf[DamlOptional]
         .getValue
 
 
-      if (optValue.isPresent) Some(optValue.get.toValue.asInstanceOf[T]) else None
+      if (optValue.isPresent) Some(optValue.get.asInstanceOf[T]) else None
     }
 
     }
 
-  def toDamlOptionalDate(o: Option[LocalDate]): DamlOptional[Date] = {
+  def toDamlOptionalDate(o: Option[LocalDate]): DamlOptional = {
     new DamlOptional(java.util.Optional.ofNullable(o.map(x => new Date(x.toEpochDay.toInt)).orNull))
   }
 

@@ -3,7 +3,7 @@
 
 package com.digitalasset.app.bot
 
-import com.daml.ledger.javaapi.components.LedgerViewFlowable
+import com.daml.ledger.rxjava.components.LedgerViewFlowable
 import com.daml.ledger.javaapi.data._
 import com.digitalasset.app.LedgerClient
 import com.digitalasset.app.utils.Cdm

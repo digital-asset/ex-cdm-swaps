@@ -5,8 +5,8 @@ package com.digitalasset.app.bot
 
 import java.util.{Collections, UUID}
 
-import com.daml.ledger.javaapi.components.LedgerViewFlowable
-import com.daml.ledger.javaapi.components.helpers.CommandsAndPendingSet
+import com.daml.ledger.rxjava.components.LedgerViewFlowable
+import com.daml.ledger.rxjava.components.helpers.CommandsAndPendingSet
 import com.daml.ledger.javaapi.data._
 import com.digitalasset.app.LedgerClient
 import io.reactivex.Flowable

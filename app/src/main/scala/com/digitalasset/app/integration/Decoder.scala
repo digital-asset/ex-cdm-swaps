@@ -62,7 +62,7 @@ class Decoder(schema: Schema.Schema) {
     if (field.withReference) {
       val reference = getJsonElement("reference", element.getAsJsonObject).get
       new Record(List(
-        new Field("reference", new DamlOptional[Value](java.util.Optional.of(decodeValue(reference, "PrimText")))),
+        new Field("reference", new DamlOptional(java.util.Optional.of(decodeValue(reference, "PrimText")))),
         new Field("value", damlNone),
         new Field("meta", new Record(List(
           new Field("reference", damlNone),
@@ -113,5 +113,5 @@ class Decoder(schema: Schema.Schema) {
     }
   }
 
-  private def damlNone = new DamlOptional[Value](java.util.Optional.empty())
+  private def damlNone = new DamlOptional(java.util.Optional.empty())
 }

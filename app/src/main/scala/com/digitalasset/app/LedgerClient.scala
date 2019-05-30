@@ -7,9 +7,9 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{Optional, UUID}
 
-import com.daml.ledger.javaapi.components.{Bot, LedgerViewFlowable}
-import com.daml.ledger.javaapi.DamlLedgerClient
-import com.daml.ledger.javaapi.components.helpers.CommandsAndPendingSet
+import com.daml.ledger.rxjava.components.{Bot, LedgerViewFlowable}
+import com.daml.ledger.rxjava.DamlLedgerClient
+import com.daml.ledger.rxjava.components.helpers.CommandsAndPendingSet
 import com.daml.ledger.javaapi.data.{Command, Event, FiltersByParty, Identifier, LedgerOffset, Record}
 import com.digitalasset.daml_lf.DamlLf
 import com.digitalasset.daml_lf.DamlLf1

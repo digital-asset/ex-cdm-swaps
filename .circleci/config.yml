@@ -12,27 +12,37 @@ jobs:
       - checkout
       - run:
           name: Install make
-          command: apt-get update && apt-get install make
+          command: (apt-get update || apt-get update) && apt-get install make
       - run:
           name: Build Application
           command: make build-app
   daml:
     docker:
-      - image: digitalasset/daml-sdk:0.12.17-circleci-master
+      - image: circleci/openjdk:8-jdk
     steps:
       - checkout
       - setup_remote_docker
       - run:
+          name: Install DAML
+          command: |
+            curl -sSL https://get.daml.com/ | sh
+            PATH=$PATH:/home/circleci/.daml/bin
+            daml install project
+      - run:
           name: Test Dar
-          command: make test-dar
+          command: |
+            PATH=$PATH:/home/circleci/.daml/bin
+            make test-dar
       - run:
           name: Build Dar
-          command: make build-dar
+          command: |
+            PATH=$PATH:/home/circleci/.daml/bin
+            make build-dar
       - run:
           name: Save test results
           command: |
             mkdir -pv ~/test-results/daml
-            find . -type f -regex ".*/target/.*DarTests.xml" -exec cp {} ~/test-results/daml/ \;
+            find . -type f -regex ".*/dist/.*DarTests.xml" -exec cp {} ~/test-results/daml/ \;
       - store_test_results:
           path: ~/test-results
 

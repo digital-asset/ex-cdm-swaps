@@ -1,0 +1,22 @@
+sdk-version: 0.12.21
+name: CdmSwaps
+version: 1.0.0
+source: daml/Main.daml
+parties:
+- CCP-P01
+- DEALER-D01
+- DEALER-D02
+- DEALER-D03
+- CLIENT-C01
+- CLIENT-C02
+- CLIENT-C03
+- CLIENT-C04
+- CLIENT-C05
+- FED
+- ECB
+- REUTERS
+exposed-modules:
+- Main
+dependencies:
+- daml-prim
+- daml-stdlib

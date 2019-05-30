@@ -28,7 +28,7 @@ To set up the application:
 
 * Build the DAML package by running:
 
-      da compile
+      daml build
 
 * Build the application by running:
 
@@ -45,12 +45,12 @@ To start the application, run each of the following commands in a separate shell
 
 * Start the sandbox by running:
 
-      da run sandbox -- target/CdmSwaps.dar --scenario Setup:empty --port 7600 &> sandbox.log
+      daml sandbox dist/CdmSwaps.dar
 
 
 * Start the navigator by running:
 
-      java -Xmx6g -Xss1024k -d64 -jar $(da path navigator) server --port 7500 localhost 7600 &> navigator.log
+      daml navigator server
 
    It is recommended to reduce the zoom of the browser to show all tables properly.
 

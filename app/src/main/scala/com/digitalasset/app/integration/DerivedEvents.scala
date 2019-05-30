@@ -62,7 +62,7 @@ class DerivedEvents(party: String, client: LedgerClient) {
                   }
 
                   val arg = new Record(List(
-                    new Field("ciCid", new ContractId[Template](ci._1)),
+                    new Field("ciCid", new ContractId(ci._1)),
                     new Field("fromDate", toDamlOptionalDate(fromDate)),
                     new Field("toDate", toDamlOptionalDate(toDate)),
                     new Field("refData", getRefData(obsDates))
@@ -177,8 +177,8 @@ class DerivedEvents(party: String, client: LedgerClient) {
       else obs.getData().filter(o => obsDates.contains(o._2.get[Record]("d").get[Date]("date").getValue))
 
     new Record(List(
-      new Field("holidayCalendarCids", new DamlList(hcs.getData().map(x => new ContractId(x._1)).asJava)),
-      new Field("observationCids", new DamlList(obsFiltered.map(x => new ContractId(x._1)).asJava)),
+      new Field("holidayCalendarCids", new DamlList(hcs.getData().map(x => new ContractId(x._1).asInstanceOf[Value]).asJava)),
+      new Field("observationCids", new DamlList(obsFiltered.map(x => new ContractId(x._1).asInstanceOf[Value]).asJava)),
     ).asJava)
   }
 }

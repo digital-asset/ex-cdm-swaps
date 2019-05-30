@@ -6,7 +6,7 @@ package com.digitalasset.app.integration
 import java.util.Collections
 
 import com.daml.ledger.javaapi.data.Record.Field
-import com.daml.ledger.javaapi.data.{CreateCommand, DamlList, Date, Decimal, ExerciseCommand, Party, Record, Text, Variant, Unit => DataUnit}
+import com.daml.ledger.javaapi.data.{CreateCommand, DamlList, Date, Decimal, ExerciseCommand, Party, Record, Text, Value, Variant, Unit => DataUnit}
 import com.digitalasset.app.LedgerClient
 import com.digitalasset.app.Schema.Schema
 import com.digitalasset.app.utils.Cdm
@@ -60,7 +60,7 @@ class DataLoading(party: String, client: LedgerClient, schema: Schema) {
       new Record(List(
         new Field("d", obsRecord),
         new Field("publisher", new Party(party)),
-        new Field("observers", new DamlList(copyTo.map(p => new Party(p)).asJava))
+        new Field("observers", new DamlList(copyTo.map(p => new Party(p).asInstanceOf[Value]).asJava))
       ).asJava)
 
     val cmd = new CreateCommand(client.getTemplateId("ObservationInstance"), obsInstance)
@@ -82,15 +82,15 @@ class DataLoading(party: String, client: LedgerClient, schema: Schema) {
     val hcd =
       new Record(List(
         new Field("label", new Text(label)),
-        new Field("weekend", new DamlList(weekend.map(w => new Variant(w, DataUnit.getInstance)).asJava)),
-        new Field("holidays", new DamlList(Collections.emptyList[Date]()))
+        new Field("weekend", new DamlList(weekend.map(w => new Variant(w, DataUnit.getInstance).asInstanceOf[Value]).asJava)),
+        new Field("holidays", new DamlList(Collections.emptyList[Value]()))
       ).asJava)
 
     val hci =
       new Record(List(
         new Field("d", hcd),
         new Field("publisher", new Party(party)),
-        new Field("observers", new DamlList(observer.map(p => new Party(p)).asJava))
+        new Field("observers", new DamlList(observer.map(p => new Party(p).asInstanceOf[Value]).asJava))
       ).asJava)
 
     val cmd = new CreateCommand(client.getTemplateId("HolidayCalendarInstance"), hci)

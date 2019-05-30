@@ -6,7 +6,7 @@ package com.digitalasset.app.bot
 import java.time.{LocalDate, ZoneOffset}
 import java.util.concurrent.ConcurrentHashMap
 
-import com.daml.ledger.javaapi.components.LedgerViewFlowable
+import com.daml.ledger.rxjava.components.LedgerViewFlowable
 import com.daml.ledger.javaapi.data.Record.Field
 import com.daml.ledger.javaapi.data._
 import com.digitalasset.app.LedgerClient
@@ -165,8 +165,8 @@ class Demo(party: String, ledgerClient: LedgerClient, eventExclusionList: List[S
     val obsCids = obs.filter(obs => obsDates.contains(obs._2.get[Record]("d").get[Date]("date").getValue)).map(_._1)
 
     new Record(List(
-      new Field("holidayCalendarCids", new DamlList(hcCids.map(hcCid => new ContractId(hcCid)).asJava)),
-      new Field("observationCids", new DamlList(obsCids.map(obsCid => new ContractId(obsCid)).asJava)),
+      new Field("holidayCalendarCids", new DamlList(hcCids.map(hcCid => new ContractId(hcCid).asInstanceOf[Value]).asJava)),
+      new Field("observationCids", new DamlList(obsCids.map(obsCid => new ContractId(obsCid).asInstanceOf[Value]).asJava)),
     ).asJava)
   }
 }

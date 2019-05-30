@@ -6,7 +6,7 @@ package com.digitalasset.app.bot
 import java.time.{Instant, ZoneOffset}
 import java.util.concurrent.ConcurrentHashMap
 
-import com.daml.ledger.javaapi.components.LedgerViewFlowable
+import com.daml.ledger.rxjava.components.LedgerViewFlowable
 import com.daml.ledger.javaapi.data._
 import com.daml.ledger.javaapi.data.Record.Field
 import com.digitalasset.app.LedgerClient
@@ -92,8 +92,8 @@ class Event(party: String, ledgerClient: LedgerClient) extends Bot(party, ledger
               case (Some(ctiCids), Some(ciCids)) =>
                 val arg = new Record(List(
                   new Field("exerciser", new Party(party)),
-                  new Field("ciCids", new DamlList(ciCids.map(x => new ContractId(x)).asJava)),
-                  new Field("ctiCids", new DamlList(ctiCids.map(x => new DamlList(x.asJava)).asJava))
+                  new Field("ciCids", new DamlList(ciCids.map(x => new ContractId(x).asInstanceOf[Value]).asJava)),
+                  new Field("ctiCids", new DamlList(ctiCids.map(x => new DamlList(x.map(_.asInstanceOf[Value]).asJava).asInstanceOf[Value]).asJava))
                 ).asJava)
                 val cmd = new ExerciseCommand(eiTid, eiCid, "Lifecycle", arg)
 
@@ -121,20 +121,20 @@ class Event(party: String, ledgerClient: LedgerClient) extends Bot(party, ledger
   }
 
   private def collectCtiCids(ctis: List[(String, Record)], cashTransfersV: List[List[Record]]) = {
-    val allocCtis = ctis.filter(_._2.getOptional[ContractId[Template]]("allocatedCashCid").isDefined)
+    val allocCtis = ctis.filter(_._2.getOptional[ContractId]("allocatedCashCid").isDefined)
 
     val matched =
-      cashTransfersV.foldRight[Option[(List[List[ContractId[Template]]], List[(String, Record)])]](Some(List(), allocCtis)) {
+      cashTransfersV.foldRight[Option[(List[List[ContractId]], List[(String, Record)])]](Some(List(), allocCtis)) {
         case (cashTransfers, accOuter) if accOuter.isDefined =>
           val (allocCidsMatchedOuter, allocRestOuter) = accOuter.get
-          val resInner = cashTransfers.foldRight[Option[(List[ContractId[Template]], List[(String, Record)])]](Some(List(), allocRestOuter)) {
+          val resInner = cashTransfers.foldRight[Option[(List[ContractId], List[(String, Record)])]](Some(List(), allocRestOuter)) {
             case (cashTransfer, accInner) if accInner.isDefined =>
               val (allocCidsMatchedInner, allocRestInner) = accInner.get
               val (matched, rest) = allocRestInner.partition(_._2.get[Record]("d").get[Record]("cashTransfer") == cashTransfer)
               if (matched.isEmpty)
                 None
               else
-                Some((new ContractId[Template](matched.head._1) :: allocCidsMatchedInner, matched.tail ++ rest))
+                Some((new ContractId(matched.head._1) :: allocCidsMatchedInner, matched.tail ++ rest))
             case _ => None
           }
           resInner match {
