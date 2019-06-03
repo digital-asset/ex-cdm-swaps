@@ -51,7 +51,7 @@ The proposal is triggered by the first party through a corresponding MasterAgree
 ### Publishing rate fixings
 A single rate fixing can be published by Reuters by running
 
-    publishRateFixing(date, rateIndex, tenor, value)
+    publishRateFixing(publisher, date, rateIndex, tenor, value)
 
 It is also possible to publish a list of rate fixings from a csv file by running
 

@@ -73,7 +73,7 @@ The second part of the demo deals with derived events like resets or cash transf
 
 3. Set the ledger time to `2018-11-15`, log in as REUTERS, go to tab `RefData_IrFixing`, and run
 
-          publishRateFixing("2018-11-15", "USD_LIBOR_BBA", "1M", 0.0002)
+          publishRateFixing("REUTERS", "2018-11-15", "USD_LIBOR_BBA", "1M", 0.0002)
 
       This publishes a rate fixing. Note that the value appears in the tab.
 

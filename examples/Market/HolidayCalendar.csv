@@ -1,4 +1,4 @@
-label,weekend
-USNY,Saturday;Sunday
-EUTA,Saturday;Sunday
-GBLO,Saturday;Sunday
+publisher,label,weekend
+REUTERS,USNY,Saturday;Sunday
+REUTERS,EUTA,Saturday;Sunday
+REUTERS,GBLO,Saturday;Sunday

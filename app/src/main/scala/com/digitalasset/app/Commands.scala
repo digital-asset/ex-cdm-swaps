@@ -15,14 +15,14 @@ object Commands {
   // Config
   private val config = ConfigFactory.load()
   private val parties = config.getStringList("parties").asScala.toList
-  private val dataProvider = config.getString("dataProvider")
+  private val dataProvider = config.getStringList("dataProvider").asScala.toList
   private val centralBanks = config.getStringList("centralBanks").asScala.toList
 
   // Clients
   private val client = initClient()
   private val schema = client.loadSchemas(config.getStringList("typeModules").asScala.toList)
   private val party2dataLoading =
-    (dataProvider :: centralBanks ++ parties)
+    (dataProvider ++ centralBanks ++ parties)
       .map(p => (p, new integration.DataLoading(p, client, schema)))
       .toMap
   private val party2derivedEvents =
@@ -77,19 +77,19 @@ object Commands {
 
 
 
-  def publishRateFixing(date: String, rateIndex: String, tenor: String, value: Double): Unit = {
-    party2dataLoading(dataProvider).loadRateFixing(date, rateIndex, tenor, value, parties)
+  def publishRateFixing(publisher: String, date: String, rateIndex: String, tenor: String, value: Double): Unit = {
+    party2dataLoading(publisher).loadRateFixing(date, rateIndex, tenor, value, parties)
   }
 
-  def publishRateFixingSingleParty(date: String, rateIndex: String, tenor: String, value: String, party: String): Unit = {
-    party2dataLoading(dataProvider).loadRateFixing(date, rateIndex, tenor, value.toDouble, List(party))
+  def publishRateFixingSingleParty(publisher: String, date: String, rateIndex: String, tenor: String, value: String, party: String): Unit = {
+    party2dataLoading(publisher).loadRateFixing(date, rateIndex, tenor, value.toDouble, List(party))
   }
 
   def publishRateFixings(file: String): Unit = {
     val bufferedSource = Source.fromFile(file)
     for (line <- bufferedSource.getLines) {
       val cols = line.split(",").map(_.trim)
-      party2dataLoading(dataProvider).loadRateFixing(cols(0), cols(1), cols(2), cols(3).toDouble, parties)
+      party2dataLoading(cols(1)).loadRateFixing(cols(0), cols(2), cols(3), cols(4).toDouble, parties)
     }
     bufferedSource.close
   }
@@ -107,7 +107,7 @@ object Commands {
     val bufferedSource = Source.fromFile(file)
     for (line <- bufferedSource.getLines.drop(1)) {
       val cols = line.split(",").map(_.trim)
-      party2dataLoading(dataProvider).loadHolidayCalendar(cols(0), cols(1).split(";").toList, parties)
+      party2dataLoading(cols(0)).loadHolidayCalendar(cols(1), cols(2).split(";").toList, parties)
     }
     bufferedSource.close
   }
