@@ -29,7 +29,8 @@ case class Config
     appId: String,
     hostIp: String,
     hostPort: Integer,
-    maxRecordOffset: Integer
+    maxRecordOffset: Integer,
+    useStaticTime: Boolean
   )
 
 class LedgerClient(config: Config) {
@@ -39,7 +40,7 @@ class LedgerClient(config: Config) {
 
   // Time client
   private val channel = ManagedChannelBuilder.forAddress(config.hostIp, config.hostPort).usePlaintext.build
-  private val timeClient = TimeServiceGrpc.newBlockingStub(channel)
+  private val timeClient = if (config.useStaticTime) TimeServiceGrpc.newBlockingStub(channel) else null
   private val ledgerId = client.getLedgerId
 
   val maxRecordOffset: Integer = config.maxRecordOffset
@@ -50,28 +51,36 @@ class LedgerClient(config: Config) {
 
   // Get current ledger time
   def getTime(): Instant = {
-    val getRequest = GetTimeRequest.newBuilder()
-      .setLedgerId(ledgerId)
-      .build()
-    val time = timeClient.getTime(getRequest).next.getCurrentTime
-    Instant.ofEpochSecond(time.getSeconds, time.getNanos)
+    if(config.useStaticTime) {
+      val getRequest = GetTimeRequest.newBuilder()
+        .setLedgerId(ledgerId)
+        .build()
+      val time = timeClient.getTime(getRequest).next.getCurrentTime
+      Instant.ofEpochSecond(time.getSeconds, time.getNanos)
+    } else {
+      Instant.now()
+    }
   }
 
   // Set current ledger time
   def setTime(newTime: Instant): Unit = {
-    val currentTime = getTime()
-    if (currentTime.isBefore(newTime)) {
-      val currentTimestamp = Timestamp.newBuilder().setSeconds(currentTime.getEpochSecond).setNanos(currentTime.getNano).build
-      val newTimestamp = Timestamp.newBuilder().setSeconds(newTime.getEpochSecond).setNanos(newTime.getNano).build
+    if(config.useStaticTime) {
+      val currentTime = getTime()
+      if (currentTime.isBefore(newTime)) {
+        val currentTimestamp = Timestamp.newBuilder().setSeconds(currentTime.getEpochSecond).setNanos(currentTime.getNano).build
+        val newTimestamp = Timestamp.newBuilder().setSeconds(newTime.getEpochSecond).setNanos(newTime.getNano).build
 
-      val setRequest = SetTimeRequest.newBuilder()
-        .setLedgerId(ledgerId)
-        .setCurrentTime(currentTimestamp)
-        .setNewTime(newTimestamp)
-        .build()
+        val setRequest = SetTimeRequest.newBuilder()
+          .setLedgerId(ledgerId)
+          .setCurrentTime(currentTimestamp)
+          .setNewTime(newTimestamp)
+          .build()
 
-      timeClient.setTime(setRequest); ()
-    }
+        timeClient.setTime(setRequest);
+        ()
+      }
+    } else
+      throw new UnsupportedOperationException("can only set time if static time is used.")
   }
 
   // Send a list of commands

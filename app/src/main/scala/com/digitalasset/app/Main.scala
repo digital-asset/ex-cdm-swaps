@@ -33,7 +33,8 @@ object Bots {
           config.getString("id"),
           config.getString("platform.host"),
           config.getInt("platform.port"),
-          config.getInt("platform.maxRecordOffset")
+          config.getInt("platform.maxRecordOffset"),
+          config.getBoolean("platform.useStaticTime")
         )
       )
 

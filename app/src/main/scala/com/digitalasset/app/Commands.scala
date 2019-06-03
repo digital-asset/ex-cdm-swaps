@@ -3,7 +3,6 @@
 
 package com.digitalasset.app
 
-import java.io.File
 import java.time.{Instant, LocalDate}
 
 import com.daml.ledger.javaapi.data.{CreateCommand, Party, Record}
@@ -37,7 +36,8 @@ object Commands {
         config.getString("id"),
         config.getString("platform.host"),
         config.getInt("platform.port"),
-        config.getInt("platform.maxRecordOffset")
+        config.getInt("platform.maxRecordOffset"),
+        config.getBoolean("platform.useStaticTime")
       )
     )
   }
@@ -48,14 +48,9 @@ object Commands {
     client.getTime()
   }
 
-  def setTime(timeString: String): Unit = {
-    val time = Instant.parse(timeString)
-    client.setTime(time)
-  }
-
   // Data loading
-  def initMarket(time: String, directory: String): Unit = {
-    Commands.setTime(time)
+  def initMarket(directory: String, time: String = ""): Unit = {
+    if (time != "") client.setTime(Instant.parse(time))
     parties.foreach(createAllocateWorfklow)
     parties.foreach(createDeriveEventsWorkflow)
     Commands.loadMasterAgreements(directory + "/MasterAgreement.csv")

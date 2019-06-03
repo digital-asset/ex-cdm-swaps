@@ -36,7 +36,7 @@ The application comes with a simple REPL that allows to send commands via the sh
 ### Initializing the market
 The market is initialized by running
 
-    initMarket(time, directory)
+    initMarket(directory, time)
 
 It sets the ledger time accordingly and loads master agreements from `MasterAgreement.csv`, holiday calendar reference data from `HolidayCalendar.csv`, and an initial set of cash from `Cash.csv`. The `MarketSetup` bot ensures that all master agreement proposals and cash transfers are accepted. See `examples/Market` for some example data.
 

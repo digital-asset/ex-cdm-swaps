@@ -199,13 +199,15 @@ function findAccount(partyReference, partyData, accounts) {
   return result;
 }
 
-function acceptProposalButton(data, party) {
+function eventButton(data, party) {
   if (data.rowData.template.id.includes("Main.Event.Proposal:EventProposal")) {
     const alreadySigned = getValue(data.rowData, "argument.sigs");
     if (alreadySigned.indexOf(party) !== -1)
       return { type: 'text', value: 'Signed' }
     else
       return { type: 'choices-button'}
+  } else if(data.rowData.template.id.includes("Main.Event.Instance:EventInstance")) {
+    return { type: 'choices-button'}
   }
   else
     return { type: 'text', value: '' }
@@ -424,7 +426,7 @@ function eventsNewTradeView(party) {
         width: 45,
         weight: 0,
         alignment: "left",
-        createCell: (data) => acceptProposalButton(data, party)
+        createCell: (data) => eventButton(data, party)
       },
       keyColumn(
         'Status', 20,
@@ -505,7 +507,7 @@ function eventsTerminationView(party) {
         width: 45,
         weight: 0,
         alignment: "left",
-        createCell: (data) => acceptProposalButton(data, party)
+        createCell: (data) => eventButton(data, party)
       },
       keyColumn(
         'Status', 20,
@@ -579,7 +581,7 @@ function eventsNovationView(party) {
         width: 45,
         weight: 0,
         alignment: "left",
-        createCell: (data) => acceptProposalButton(data, party)
+        createCell: (data) => eventButton(data, party)
       },
       keyColumn(
         'Status', 20,

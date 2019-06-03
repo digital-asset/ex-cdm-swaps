@@ -17,7 +17,7 @@ Note that the central counter party, the dealers, and clients can all perform th
 
 In order to initialize the market, run
 
-    initMarket("2018-10-26T12:00:00Z", "../examples/Market")
+    initMarket("../examples/Market", "2018-10-26T12:00:00Z")
 
 to
 
