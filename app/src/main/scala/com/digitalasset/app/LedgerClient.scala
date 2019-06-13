@@ -86,7 +86,7 @@ class LedgerClient(config: Config) {
   // Send a list of commands
   def sendCommands(party: String, commands: List[Command]): Unit = {
     val currentTime = getTime()
-    val maxRecordTime = currentTime.plusSeconds(30)
+    val maxRecordTime = currentTime.plusSeconds(300)
     client.getCommandClient.submitAndWait(
       UUID.randomUUID().toString,
       config.appId,
