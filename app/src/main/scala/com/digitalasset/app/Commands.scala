@@ -64,7 +64,7 @@ object Commands {
       new Record.Field("sig", new Party(party))
     ).asJava)
     val cmd = new CreateCommand(client.getTemplateId("AllocateWorkflow"), arg)
-    client.sendCommands(party, List(cmd))
+    client.sendCommandsSync(party, List(cmd))
   }
 
   private def createDeriveEventsWorkflow(party: String): Unit = {

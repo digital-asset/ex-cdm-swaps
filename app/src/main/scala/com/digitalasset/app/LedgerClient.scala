@@ -6,6 +6,7 @@ package com.digitalasset.app
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import java.util.{Optional, UUID}
+import java.util.concurrent.TimeUnit
 
 import com.daml.ledger.rxjava.components.{Bot, LedgerViewFlowable}
 import com.daml.ledger.rxjava.DamlLedgerClient
@@ -97,6 +98,23 @@ class LedgerClient(config: Config) {
       commands.asJava
     )
     ()
+  }
+
+  // Send a list of commands synchronously
+  def sendCommandsSync(party: String, commands: List[Command]): Unit = {
+    val currentTime = getTime()
+    val maxRecordTime = currentTime.plusSeconds(30)
+    client.getCommandClient.submitAndWait(
+      UUID.randomUUID().toString,
+      config.appId,
+      UUID.randomUUID().toString,
+      party,
+      currentTime,
+      maxRecordTime,
+      commands.asJava
+    )
+    .timeout(60, TimeUnit.SECONDS)
+    .blockingGet()
   }
 
   // Wire new bot
