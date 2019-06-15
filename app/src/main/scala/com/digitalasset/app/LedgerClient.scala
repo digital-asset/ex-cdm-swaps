@@ -103,7 +103,7 @@ class LedgerClient(config: Config) {
   // Send a list of commands synchronously
   def sendCommandsSync(party: String, commands: List[Command]): Unit = {
     val currentTime = getTime()
-    val maxRecordTime = currentTime.plusSeconds(30)
+    val maxRecordTime = currentTime.plusSeconds(200)
     client.getCommandClient.submitAndWait(
       UUID.randomUUID().toString,
       config.appId,
@@ -113,7 +113,7 @@ class LedgerClient(config: Config) {
       maxRecordTime,
       commands.asJava
     )
-    .timeout(60, TimeUnit.SECONDS)
+    .timeout(200, TimeUnit.SECONDS)
     .blockingGet()
   }
 
