@@ -38,7 +38,6 @@ object Bots {
         )
       )
 
-    parties.foreach(p => new bot.DerivedEvents(p, client))
     parties.foreach(p => new bot.Event(p, client))
     parties.foreach(p => new bot.Cash(p, client))
     if (includeDemo) parties.foreach(p => new bot.Demo(p, client, demoEventExclusionList))

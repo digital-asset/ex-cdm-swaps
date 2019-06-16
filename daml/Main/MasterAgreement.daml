@@ -8,7 +8,6 @@ import Org.Isda.Cdm.EventSpecificationModule as Cdm hiding (Party, RefData)
 import Main.Event.Instance
 import Main.Event.Proposal hiding (Accept)
 import Main.Market.Contract
-import Main.ReferenceData
 import Main.Types
 import Main.Utils.Common
 import Main.Utils.Cdm
@@ -37,102 +36,6 @@ template MasterAgreementInstance
         let spec = NewTradeSpec with ..
         event <- setEventRosettaKey $ Cdm.buildNewTradeEvent spec
         create EventProposal with ps, d = event, sigs = [exerciser]
-
-    nonconsuming choice ProposeTermination: ContractId EventProposal
-      with
-        exerciser  : Party
-        ps      : [PartyWithId]
-        base    : BaseEvent
-        ciCid   : ContractId ContractInstance
-      controller exerciser
-      do
-        assertMsg "exerciser exists" $ p1 == exerciser || p2 == exerciser
-        ci <- fetch ciCid
-        let spec = TerminationSpec with contract = ci.d, ..
-        event <- setEventRosettaKey $ Cdm.buildTerminationEvent spec
-        create EventProposal with ps, d = event, sigs = [exerciser]
-
-    nonconsuming choice ProposePartialTermination: ContractId EventProposal
-      with
-        exerciser  : Party
-        ps      : [PartyWithId]
-        base    : BaseEvent
-        change  : [ContractualQuantity]
-        ciCid   : ContractId ContractInstance
-      controller exerciser
-      do
-        assertMsg "exerciser exists" $ p1 == exerciser || p2 == exerciser
-        ci <- fetch ciCid
-        let spec = PartialTerminationSpec with contract = ci.d, ..
-        event <- setEventRosettaKey $ Cdm.buildPartialTerminationEvent spec
-        create EventProposal with ps, d = event, sigs = [exerciser]
-
-    nonconsuming choice ProposeNovation: ContractId EventProposal
-      with
-        exerciser      : Party
-        ps          : [PartyWithId]
-        base        : BaseEvent
-        contractNew : Contract
-        ciCid       : ContractId ContractInstance
-      controller exerciser
-      do
-        assertMsg "exerciser exists" $ p1 == exerciser || p2 == exerciser
-        ci <- fetch ciCid
-        let spec = NovationSpec with contract = ci.d, ..
-        event <- setEventRosettaKey $ Cdm.buildNovationEvent spec
-        create EventProposal with ps, d = event, sigs = [exerciser]
-
-    nonconsuming choice ProposePartialNovation: ContractId EventProposal
-      with
-        exerciser      : Party
-        ps          : [PartyWithId]
-        base        : BaseEvent
-        change      : [ContractualQuantity]
-        contractNew : Contract
-        ciCid       : ContractId ContractInstance
-      controller exerciser
-      do
-        assertMsg "exerciser exists" $ p1 == exerciser || p2 == exerciser
-        ci <- fetch ciCid
-        let spec = PartialNovationSpec with contract = ci.d, ..
-        event <- setEventRosettaKey $ Cdm.buildPartialNovationEvent spec
-        create EventProposal with ps, d = event, sigs = [exerciser]
-
-    nonconsuming choice CreateDerivedEvent: ContractId EventInstance
-      with
-        exerciser  : Party
-        refData : RefData
-        ciCid   : ContractId ContractInstance
-        event   : Event
-      controller exerciser
-      do
-        assertMsg "exerciser exists" $ p1 == exerciser || p2 == exerciser
-        ledgerTime <- getTime
-        assertOnOrAfterDateMsg "can only create derived events after event date" event.eventDate
-
-        -- Re-build derived events and check that the provided event is identical
-        ci <- fetch ciCid
-        lifecycleEvents <- mapA (\enCid -> do en <- fetch enCid; return en.d) ci.lifecycleEventCids
-        let spec = DerivedSpec with
-                    fromDate = Some event.eventDate
-                    toDate = Some event.eventDate
-                    pastEvents = lifecycleEvents
-                    contract = ci.d
-
-        eventNew <-
-          setEventRosettaKey
-          =<< (fromSomeTry "no events found" .
-                find (\e -> e.effectiveDate == event.effectiveDate && e.eventQualifier == event.eventQualifier))
-          =<< (flip Cdm.buildDerivedEvents) spec
-          <$> toCdmRefData refData
-        assertMsg "event has realized" (eventNew.primitive /= emptyPrimitiveEvent)
-
-        -- Net transfers
-        let eventNetted = eventNew with
-                            primitive = eventNew.primitive with
-                              transfer = Cdm.netTransfers eventNew.primitive.transfer
-
-        create EventInstance with ps = ci.ps, d = eventNetted
 
 ---------------------------------------------- Proposal ------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------

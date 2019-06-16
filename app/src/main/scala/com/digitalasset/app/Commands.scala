@@ -25,10 +25,6 @@ object Commands {
     (dataProvider ++ centralBanks ++ parties)
       .map(p => (p, new integration.DataLoading(p, client, schema)))
       .toMap
-  private val party2derivedEvents =
-    parties
-      .map(p => (p, new integration.DerivedEvents(p, client)))
-      .toMap
 
   private def initClient(): LedgerClient = {
     new LedgerClient(
@@ -51,8 +47,6 @@ object Commands {
   // Data loading
   def initMarket(directory: String, time: String = ""): Unit = {
     if (time != "") client.setTime(Instant.parse(time))
-    parties.foreach(createAllocateWorfklow)
-    parties.foreach(createDeriveEventsWorkflow)
     Commands.loadMasterAgreements(directory + "/MasterAgreement.csv")
     Commands.loadHolidayCalendars(directory + "/HolidayCalendar.csv")
     Commands.loadCash(directory + "/Cash.csv")
@@ -126,21 +120,5 @@ object Commands {
       val party = json.getAsJsonObject("argument").getAsJsonArray("ps").iterator.next.getAsJsonObject.get("p").getAsString
       party2dataLoading(party).loadEvent(json)
     }
-  }
-
-  def deriveEvents(party: String, contractRosettaKey: String): Unit = {
-    party2derivedEvents(party).deriveEvents(contractRosettaKey, None, None)
-  }
-
-  def deriveEventsAll(party: String, fromDate: Option[String], toDate: Option[String]): Unit = {
-    party2derivedEvents(party).deriveEventsAll(fromDate.map(LocalDate.parse), toDate.map(LocalDate.parse))
-  }
-
-  def createNextDerivedEvent(party: String, contractRosettaKey: String, eventQualifier: String): Unit = {
-    party2derivedEvents(party).createNextDerivedEvent(contractRosettaKey, eventQualifier)
-  }
-
-  def removeDerivedEvents(party: String, contractRosettaKey: String): Unit = {
-    party2derivedEvents(party).removeDerivedEvents(contractRosettaKey)
   }
 }
