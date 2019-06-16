@@ -16,9 +16,6 @@ import Org.Isda.Cdm.EventSpecificationModule.Types.All
 
 -- | Check PaymentDates for non-supported features
 checkPaymentDates : CalculationPeriodDates -> PaymentDates -> PaymentDates
-checkPaymentDates _ pds | isSome pds.firstPaymentDate = throwNotSupportedError "PaymentDates.firstPaymentDate"
-checkPaymentDates _ pds | isSome pds.lastPaymentDate = throwNotSupportedError "PaymentDates.lastPaymentDate"
-checkPaymentDates _ pds | isSome pds.dateRelativeTo = throwNotSupportedError "PaymentDates.dateRelativeTo"
 checkPaymentDates cpds pds | checkFrequency cpds pds = throwNotSupportedError "paymentFrequency not equal to calculationPeriodFrequency"
   where
     checkFrequency : CalculationPeriodDates -> PaymentDates -> Bool
@@ -74,9 +71,5 @@ generatePaymentCalculationPeriods cpds rds (fmap (checkPaymentDates cpds) -> pds
                 { id = None
                 , adjustedPaymentDate = Some aPayDate
                 , calculationPeriod = cps
-                , discountFactor = None
-                , fixedPaymentAmount = None
-                , forecastPaymentAmount = None
-                , presentValueAmount = None
                 , unadjustedPaymentDate = Some uPayDate
                 }

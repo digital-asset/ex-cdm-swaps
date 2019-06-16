@@ -19,15 +19,6 @@ import Org.Isda.Cdm.EventSpecificationModule.Types.All hiding (length)
 
 -- | Check InterestRatePayout for non-supported features
 checkInterestRatePayout : InterestRatePayout -> InterestRatePayout
-checkInterestRatePayout irp | isSome irp.cashflowRepresentation = throwNotSupportedError "InterestRatePayout.cashflowRepresentation"
-checkInterestRatePayout irp | isSome irp.stubPeriod = throwNotSupportedError "InterestRatePayout.stubPeriod"
-checkInterestRatePayout irp | isSome irp.crossCurrencyTerms = throwNotSupportedError "InterestRatePayout.crossCurrencyTerms"
-checkInterestRatePayout irp | isSome irp.paymentDate = throwNotSupportedError "InterestRatePayout.paymentDate"
-checkInterestRatePayout irp | isSome irp.paymentDelay = throwNotSupportedError "InterestRatePayout.paymentDelay"
-checkInterestRatePayout irp | isSome irp.discountingMethod = throwNotSupportedError "InterestRatePayout.discountingMethod"
-checkInterestRatePayout irp | isSome irp.compoundingMethod = throwNotSupportedError "InterestRatePayout.compoundingMethod"
-checkInterestRatePayout irp | isSome irp.rateSpecification.inflationRate = throwNotSupportedError "InterestRatePayout.rateSpecification.inflationRate"
-checkInterestRatePayout irp | not $ null $optional [] (\fr -> fr.step) irp.rateSpecification.fixedRate = throwNotSupportedError "InterestRatePayout.rateSpecification.inflationRate"
 checkInterestRatePayout irp | isSome resetReference && resetReference /= irp.calculationPeriodDates.id = throwNotSupportedError "cross referenced schedules"
   where resetReference = irp.resetDates >>= (\rd -> rd.calculationPeriodDatesReference) >>= (\ref -> ref.reference)
 checkInterestRatePayout irp = irp
@@ -109,8 +100,8 @@ populatePCP existingResets irp pcp =
     setQuantity cp =
       let quantity = get "quantity" irp.quantity
           startDate = get "adjustedStartDate" cp.adjustedStartDate
-          (notionalAmount, fxLinkedNotionalAmount) = calcQuantity startDate quantity
-      in cp { notionalAmount, fxLinkedNotionalAmount }
+          notionalAmount = calcQuantity startDate quantity
+      in cp { notionalAmount }
 
     setInterestRate : CalculationPeriod -> ([Text], CalculationPeriod)
     setInterestRate cp

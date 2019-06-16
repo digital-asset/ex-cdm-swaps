@@ -43,7 +43,6 @@ buildTerminationEvent spec =
       , party = spec.contract.party
       , primitive = primitive
       , timestamp = spec.base.timestamp
-      , eventWorkflow = None
       }
 
 -- | Build PartialTermination event
@@ -71,7 +70,6 @@ buildPartialTerminationEvent spec =
       , party = spec.contract.party
       , primitive = primitive
       , timestamp = spec.base.timestamp
-      , eventWorkflow = None
       }
 
 -- | HIDE

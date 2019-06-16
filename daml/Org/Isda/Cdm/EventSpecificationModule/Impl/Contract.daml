@@ -13,10 +13,6 @@ import Prelude hiding (Party)
 
 -- | Check Contract for non-supported features
 checkContract : Contract -> Contract
-checkContract contract | isSome contract.contractualProduct.economicTerms.earlyTerminationProvision = throwNotSupportedError "Contract.contractualProduct.economicTerms.earlyTerminationProvision"
-checkContract contract | isSome contract.contractualProduct.economicTerms.cancelableProvision = throwNotSupportedError "Contract.contractualProduct.economicTerms.cancelableProvision"
-checkContract contract | isSome contract.contractualProduct.economicTerms.extendibleProvision = throwNotSupportedError "Contract.contractualProduct.economicTerms.extendibleProvision"
-checkContract contract | isSome contract.contractualProduct.economicTerms.extraordinaryEvents = throwNotSupportedError "Contract.contractualProduct.economicTerms.extraordinaryEvents"
 checkContract contract = contract
 
 -- | Build all reset and cash transfer (payment) events that haven't been processed yet
@@ -54,10 +50,7 @@ getContractualQuantity contract =
     getCdpQuantity : ProtectionTerms -> ContractualQuantity
     getCdpQuantity pTerms =
       ContractualQuantity
-        { futureValueNotional = None
-        , fxLinkedNotional = None
-        , notionalAmount = None
-        , notionalSchedule = Some NotionalSchedule
+        { notionalSchedule = Some NotionalSchedule
             { id = None
             , notionalStepSchedule = NonNegativeAmountSchedule
                 { id = None
@@ -65,11 +58,7 @@ getContractualQuantity contract =
                 , initialValue = pTerms.notionalAmount.amount
                 , step = []
                 }
-            , notionalStepParameters = None
             }
-        , quantity = None
-        , notionalReset = None
-        , notionalAdjustments = None
         }
 
 -- | Set ContractualQuantity in Contract

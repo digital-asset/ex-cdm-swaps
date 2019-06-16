@@ -33,5 +33,4 @@ buildNewTradeEvent spec =
       , party = spec.after.contract.party
       , primitive = primitive
       , timestamp = spec.base.timestamp
-      , eventWorkflow = None
       }

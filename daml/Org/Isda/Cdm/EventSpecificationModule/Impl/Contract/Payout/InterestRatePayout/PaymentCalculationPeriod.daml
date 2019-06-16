@@ -14,12 +14,10 @@ import Org.Isda.Cdm.EventSpecificationModule.Types.All
 -- | Check PaymentCalculationPeriod for non-supported features
 checkPaymentCalculationPeriod : PaymentCalculationPeriod -> PaymentCalculationPeriod
 checkPaymentCalculationPeriod pcp | L.length pcp.calculationPeriod > 1 = throwNotSupportedError "multiple PaymentCalculationPeriod.calculationPeriod(s)"
-checkPaymentCalculationPeriod pcp | isSome pcp.fixedPaymentAmount = throwNotSupportedError "PaymentCalculationPeriod.fixedPaymentAmount"
 checkPaymentCalculationPeriod pcp = let _ = map checkCalculationPeriod pcp.calculationPeriod in pcp
 
 -- | Check CalculationPeriod for non-supported features
 checkCalculationPeriod : CalculationPeriod -> CalculationPeriod
-checkCalculationPeriod cp | isSome cp.fxLinkedNotionalAmount = throwNotSupportedError "CalculationPeriod.fxLinkedNotionalAmount"
 checkCalculationPeriod cp = let _ = fmap checkFloatingRateDefinition cp.floatingRateDefinition in cp
 
 -- | Build reset events which haven't been processed yet
@@ -121,8 +119,6 @@ buildPaymentEvent fromDate toDate lineage ccy dateAdjustments payerReceiver pcp 
                                 , transferCalculation = None
                                 }
                             ]
-                        , commodityTransfer = []
-                        , securityTransfer = []
                         , settlementDate = paymentDate
                         , settlementReference = None
                         , status = None
@@ -148,7 +144,6 @@ buildPaymentEvent fromDate toDate lineage ccy dateAdjustments payerReceiver pcp 
     isCpNotionalFixed : CalculationPeriod -> Bool
     isCpNotionalFixed cp
       | Some notionalAmount <- cp.notionalAmount = True
-      | Some fxLinkedNotionalAmount <- cp.fxLinkedNotionalAmount = isSome fxLinkedNotionalAmount.observedFxSpotRate
       | otherwise = error "expecting 'notionalAmount' or 'fxLinkedNotionalAmount' in CalculationPeriod"
 
     isCpRateFixed : CalculationPeriod -> Bool

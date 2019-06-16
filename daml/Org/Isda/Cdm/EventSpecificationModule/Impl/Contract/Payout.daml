@@ -20,9 +20,6 @@ import Org.Isda.Cdm.EventSpecificationModule.Types.All hiding (length)
 
 -- | Check Payout for non-supported features
 checkPayout : Payout -> Payout
-checkPayout payout | not $ null payout.optionPayout = throwNotSupportedError "Payout.optionPayout"
-checkPayout payout | not $ null payout.equityPayout = throwNotSupportedError "Payout.equityPayout"
-checkPayout payout | not $ null payout.forwardPayout = throwNotSupportedError "Payout.forwardPayout"
 checkPayout payout = payout
 
 -- | Build all reset and cash transfer (payment) events that haven't been processed yet

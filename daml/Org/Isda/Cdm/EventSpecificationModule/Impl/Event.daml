@@ -26,7 +26,6 @@ emptyEvent = Event
               , party = []
               , primitive = emptyPrimitiveEvent
               , timestamp = []
-              , eventWorkflow = None
               }
 
 emptyEventEffect : EventEffect
@@ -123,10 +122,7 @@ emptyLineage = Lineage
                 , cashflowReference = []
                 , creditDefaultPayoutReference = []
                 , interestRatePayoutReference = []
-                , optionPayoutReference = []
-                , equityPayoutReference = []
                 , eventReference = []
-                , legalDocument = []
                 }
 
 -- | Merge two lineages
@@ -137,10 +133,7 @@ mergeLineages l1 l2 =
     , cashflowReference             = l1.cashflowReference ++ l2.cashflowReference
     , creditDefaultPayoutReference  = l1.creditDefaultPayoutReference ++ l2.creditDefaultPayoutReference
     , interestRatePayoutReference   = l1.interestRatePayoutReference ++ l2.interestRatePayoutReference
-    , optionPayoutReference         = l1.optionPayoutReference ++ l2.optionPayoutReference
-    , equityPayoutReference         = l1.equityPayoutReference ++ l2.equityPayoutReference
     , eventReference                = l1.eventReference ++ l2.eventReference
-    , legalDocument                 = l1.legalDocument ++ l2.legalDocument
     }
 
 -- | Get list of cashflow references from event

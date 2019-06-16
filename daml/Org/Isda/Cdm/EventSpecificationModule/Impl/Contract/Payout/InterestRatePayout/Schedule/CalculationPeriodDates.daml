@@ -17,8 +17,6 @@ import Org.Isda.Cdm.EventSpecificationModule.Types.All hiding (length)
 
 -- | Check CalculationPeriodDates for non-supported features
 checkCalculationPeriodDates : CalculationPeriodDates -> CalculationPeriodDates
-checkCalculationPeriodDates cpds | isSome cpds.firstPeriodStartDate = throwNotSupportedError "CalculationPeriodDates.firstPeriodStartDate"
-checkCalculationPeriodDates cpds | isSome cpds.firstCompoundingPeriodEndDate = throwNotSupportedError "CalculationPeriodDates.firstCompoundingPeriodEndDate"
 checkCalculationPeriodDates cpds | fmap (\f -> f.period) cpds.calculationPeriodFrequency == Some PeriodExtendedEnum_T = throwNotSupportedError "PeriodExtendedEnum_T"
 checkCalculationPeriodDates cpds = cpds
 
@@ -148,7 +146,6 @@ defineCalculationPeriods uDates aDates =
         , floatingRateDefinition = None
         , forecastAmount = None
         , forecastRate = None
-        , fxLinkedNotionalAmount = None
         , notionalAmount = None
         , unadjustedEndDate = Some unadjustedEndDate
         , unadjustedStartDate = Some unadjustedStartDate

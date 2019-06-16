@@ -13,9 +13,6 @@ import Org.Isda.Cdm.EventSpecificationModule.Types.All
 
 -- | Check ResetDates for non-supported features
 checkResetDates : CalculationPeriodDates -> ResetDates -> ResetDates
-checkResetDates _ rds | isSome rds.initialFixingDate = throwNotSupportedError "ResetDates.initialFixingDate"
-checkResetDates _ rds | isSome rds.finalFixingDate = throwNotSupportedError "ResetDates.finalFixingDate"
-checkResetDates _ rds | isSome rds.rateCutOffDaysOffset = throwNotSupportedError "ResetDates.rateCutOffDaysOffset"
 checkResetDates cpds rds | checkFrequency cpds rds = throwNotSupportedError "resetFrequency not equal to calculationPeriodFrequency"
   where
     checkFrequency : CalculationPeriodDates -> ResetDates -> Bool
@@ -60,9 +57,7 @@ generateResetPeriods cpds (Some (checkResetDates cpds -> rds)) = do
       ros <- mapA generateRateObservation resetDates
       return $ cp { floatingRateDefinition = Some FloatingRateDefinition
                                                     { calculatedRate = None
-                                                    , capRate = []
                                                     , floatingRateMultiplier = None
-                                                    , floorRate = []
                                                     , rateObservation = ros
                                                     , spread = None
                                                     }}

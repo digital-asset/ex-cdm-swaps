@@ -30,8 +30,6 @@ buildEvent fromDate toDate cf = do
                             , transferCalculation = None
                             }
                         ]
-                    , commodityTransfer = []
-                    , securityTransfer = []
                     , settlementDate = cashflowDate
                     , settlementReference = None
                     , status = None

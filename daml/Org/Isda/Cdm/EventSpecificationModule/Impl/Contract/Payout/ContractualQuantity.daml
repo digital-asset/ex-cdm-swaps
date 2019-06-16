@@ -15,16 +15,9 @@ import Org.Isda.Cdm.EventSpecificationModule.Types.All
 
 -- | Check ContractualQuantity for non-supported features
 checkContractualQuantity : ContractualQuantity -> ContractualQuantity
-checkContractualQuantity cQuantity | isSome cQuantity.quantity = throwNotSupportedError "ContractualQuantity.quantity"
-checkContractualQuantity cQuantity | isSome cQuantity.futureValueNotional = throwNotSupportedError "ContractualQuantity.futureValueNotional"
-checkContractualQuantity cQuantity | isSome cQuantity.fxLinkedNotional = throwNotSupportedError "ContractualQuantity.fxLinkedNotional"
-checkContractualQuantity cQuantity | isSome cQuantity.notionalReset = throwNotSupportedError "ContractualQuantity.notionalReset"
-checkContractualQuantity cQuantity | isSome cQuantity.notionalAdjustments = throwNotSupportedError "ContractualQuantity.notionalAdjustments"
-checkContractualQuantity cQuantity | isSome cQuantity.notionalAmount = throwNotSupportedError "ContractualQuantity.notionalAmount"
 checkContractualQuantity cQuantity | Some (checkNotionalSchedule -> ns) <- cQuantity.notionalSchedule = cQuantity
   where
     checkNotionalSchedule : NotionalSchedule -> NotionalSchedule
-    checkNotionalSchedule ns | isSome ns.notionalStepParameters = throwNotSupportedError "NotionalSchedule.notionalStepParameters"
     checkNotionalSchedule ns | not $ null ns.notionalStepSchedule.step = throwNotSupportedError "NotionalSchedule.notionalStepSchedule.step"
     checkNotionalSchedule ns = ns
 checkContractualQuantity cQuantity = cQuantity
@@ -36,14 +29,14 @@ getCurrency (checkContractualQuantity -> cQuantity)
   | otherwise = error "expecting some quantity in ContractualQuantity"
 
 -- | Calculate quantity from ContractualQuantity
-calcQuantity : Date -> ContractualQuantity -> (Optional Decimal, Optional FxLinkedNotionalAmount)
+calcQuantity : Date -> ContractualQuantity -> (Optional Decimal)
 calcQuantity baseDate (checkContractualQuantity -> cQuantity)
   | Some ns <- cQuantity.notionalSchedule = fromNotionalSchedule ns baseDate
   | otherwise = error "expecting some quantity in ContractualQuantity"
 
   where
-    fromNotionalSchedule : NotionalSchedule -> Date -> (Optional Decimal, Optional FxLinkedNotionalAmount)
-    fromNotionalSchedule ns baseDate = (Some ns.notionalStepSchedule.initialValue, None)
+    fromNotionalSchedule : NotionalSchedule -> Date -> (Optional Decimal)
+    fromNotionalSchedule ns baseDate = (Some ns.notionalStepSchedule.initialValue)
 
 -- | Subtract two ContractualQuantity values
 subtract : ContractualQuantity -> ContractualQuantity -> ContractualQuantity

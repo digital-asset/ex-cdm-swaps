@@ -27,10 +27,8 @@ netTransfers (map checkTransferPrimitive -> transfers) = combineOn (\t -> (t.set
 
       in TransferPrimitive
           { cashTransfer = nettedCts
-          , commodityTransfer = []
           , identifier = None
           , rosettaKey = ""
-          , securityTransfer = []
           , settlementDate = settlementDate
           , settlementReference = settlementReference
           , settlementType = settlementType

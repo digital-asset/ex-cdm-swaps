@@ -60,8 +60,6 @@ instruct : EventInstance -> Update InstructResult
 instruct ei = do
   let transfer = ei.d.primitive.transfer
   assertMsg "can only instruct transfers" (not $ null transfer)
-  assertMsg "securityTransfer not supported yet" $ all (\t -> null t.securityTransfer) transfer
-  assertMsg "commodityTransfer not supported yet" $ all (\t -> null t.commodityTransfer) transfer
   assertOnOrAfterDateMsg "can only instruct after event date" ei.d.eventDate
 
   transferNew <- mapA setStatus transfer
@@ -144,8 +142,6 @@ lifecycle ei ciCids ctiCids= do
     settleTransfer : (TransferPrimitive, [ContractId CashTransferInstruction]) -> Update (TransferPrimitive, [ContractId Cash])
     settleTransfer (transfer, cashTransferInstructionCids) = do
       -- TODO: check that we are after settlement date
-      assertMsg "securityTransfer not supported yet" $ null transfer.securityTransfer
-      assertMsg "commodityTransfer not supported yet" $ null transfer.commodityTransfer
 
       assertMsg "status ok" (transfer.status == Some TransferStatusEnum_Instructed)
       let transferNew = transfer with status = Some TransferStatusEnum_Settled

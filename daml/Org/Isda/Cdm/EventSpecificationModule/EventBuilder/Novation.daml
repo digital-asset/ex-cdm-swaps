@@ -51,7 +51,6 @@ buildNovationEvent spec =
       , party = dedup $ spec.contract.party ++ spec.contractNew.party
       , primitive = primitive
       , timestamp = spec.base.timestamp
-      , eventWorkflow = None
       }
 
 -- | Build Partial Novation event
@@ -85,7 +84,6 @@ buildPartialNovationEvent spec =
       , party = dedup $ spec.contract.party ++ spec.contractNew.party
       , primitive = primitive
       , timestamp = spec.base.timestamp
-      , eventWorkflow = None
       }
 
 -- | HIDE
@@ -114,9 +112,7 @@ buildInception : Contract -> Inception
 buildInception contract =
   Inception
     { after = PostInceptionState
-        { creditLimitInformation = None
-        , tradeWarehouseWorkflow = None
-        , contract = contract
+        { contract = contract
         }
     , before = []
     }
