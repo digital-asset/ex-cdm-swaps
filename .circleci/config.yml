@@ -5,7 +5,7 @@ version: 2.1
 jobs:
   application:
     docker:
-      - image: hseeberger/scala-sbt:11.0.2_2.12.8_1.2.8
+      - image: mozilla/sbt:latest
     environment:
       - MAKEFLAGS: "-i"
     steps:

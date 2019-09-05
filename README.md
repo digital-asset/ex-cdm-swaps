@@ -45,7 +45,7 @@ To start the application, run each of the following commands in a separate shell
 
 * Start the sandbox by running:
 
-      daml sandbox dist/CdmSwaps.dar
+      daml sandbox .daml/dist/CdmSwaps-1.0.0.dar
 
 
 * Start the navigator by running:

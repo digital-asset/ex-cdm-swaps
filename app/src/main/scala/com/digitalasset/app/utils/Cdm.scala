@@ -54,5 +54,5 @@ object Cdm {
 
   def emptyArg = new Record(Collections.emptyList[Field])
 
-  def archiveArg: Value = Unit.getInstance().asInstanceOf[Value]
+  def archiveArg: Value = emptyArg
 }

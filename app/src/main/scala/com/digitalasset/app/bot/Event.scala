@@ -163,7 +163,7 @@ class Event(party: String, ledgerClient: LedgerClient) extends Bot(party, ledger
       ei.get[Record]("d")
         .get[Record]("primitive")
         .getList[Record]("transfer")
-        .map(_.getOptional[Variant]("status").map(_.getConstructor).getOrElse("TransferStatusEnum_Pending"))
+        .map(_.getOptional[DamlEnum]("status").map(_.getConstructor).getOrElse("TransferStatusEnum_Pending"))
 
     val isPending = statuses.nonEmpty && statuses.forall(x => x == "TransferStatusEnum_Pending")
     if (statuses.nonEmpty && !isPending && statuses.contains("TransferStatusEnum_Pending"))

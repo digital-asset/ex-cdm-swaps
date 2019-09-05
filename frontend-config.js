@@ -78,8 +78,10 @@ function getValue(c, key) {
         case 'text': return v['value'];
         case 'int64': return v['value'];
         case 'decimal': return v['value'];
+        case 'numeric': return v['value']
         case 'date': return v['value'];
         case 'optional': return (v['value'] === null) ? {'None' : {}} : {'Some' : v['value']};
+        case 'enum': return v['constructor'];
         case 'variant': {
           const res = {};
           res[v['constructor']] = v['value'];
@@ -150,9 +152,7 @@ function assIdtToString(assIdt) {
 }
 
 function toEnumString(x) {
-  const res = [];
-  for (const i in x) res.push(i);
-  return res[0].replace(RegExp('.*Enum_'), '');
+  return x.replace(RegExp('.*Enum_'), '');
 }
 
 function toCommas(value) { // From StackOverflow

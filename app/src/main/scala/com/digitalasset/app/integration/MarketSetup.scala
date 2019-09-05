@@ -1,43 +1,41 @@
 // Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package com.digitalasset.app.bot
+package com.digitalasset.app.integration
 
-import com.daml.ledger.rxjava.components.LedgerViewFlowable
 import com.daml.ledger.javaapi.data.Record.Field
 import com.daml.ledger.javaapi.data._
 import com.digitalasset.app.LedgerClient
 import com.digitalasset.app.utils.Cdm
 import com.digitalasset.app.utils.Record._
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
 
-class MarketSetup(party: String, ledgerClient: LedgerClient) extends Bot(party, ledgerClient) {
+class MarketSetup(party: String, client: LedgerClient) {
+  private def logger: Logger = LoggerFactory.getLogger("Integration - MarketSetup " + party)
 
-  def name: String = "Bot - MarketSetup " + party
-  def templateFilter = Set("MasterAgreementProposal", "CashTransferRequest")
+  private val maps = new InMemoryDataStore(party, "MasterAgreementProposal", client)
+  private val ctrs = new InMemoryDataStore(party, "CashTransferRequest", client)
 
-  def run(getTid: String => Identifier, ledgerView: LedgerViewFlowable.LedgerView[Record]): List[Command] = {
-    val mapTid = getTid("MasterAgreementProposal")
-    val ctpTid  = getTid("CashTransferRequest")
-
-    val maps = ledgerView.getContracts(mapTid).asScala.toList
-    val ctps = ledgerView.getContracts(ctpTid).asScala.toList
+  def run() = {
+    val mapTid = client.getTemplateId("MasterAgreementProposal")
+    val ctpTid  = client.getTemplateId("CashTransferRequest")
 
     // Accept MasterAgreementProposal
     val cmds1 =
-      maps.flatMap {
+      maps.getData().flatMap {
         case (cId, ma) if ma.get[Party]("p2").getValue == party =>
-          logger.info("Accepting MasterAgreementProposal...")
+          logger.info("Accepting MasterAgreementProposal... ")
           Some(new ExerciseCommand(mapTid, cId, "Accept", Cdm.emptyArg))
         case _ => None
       }
 
     // Accept CashTransferProposal
     val cmds2 =
-      ctps.flatMap {
+      ctrs.getData().flatMap {
         case (cId, ctp) =>
-          logger.info("Accepting CashTransferRequest...")
+          logger.info("Accepting CashTransferRequest... ")
           val arg = new Record(List(
             new Field("accountTo", ctp.get[Text]("accountFrom"))
           ).asJava)
@@ -45,6 +43,6 @@ class MarketSetup(party: String, ledgerClient: LedgerClient) extends Bot(party, 
         case _ => None
       }
 
-    cmds1 ++ cmds2
+    client.sendCommands(party, cmds1 ++ cmds2)
   }
 }

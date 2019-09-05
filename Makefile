@@ -42,7 +42,7 @@ test-dar: $(dar_test_result)
 # TODO - move to junit files when new version of SDK comes out
 $(dar_test_result): $(shell find $(damlsrc) -type f) daml.yaml
 	@echo test triggered because these files changed: $?
-	$(damlc) test --junit $@ $(damlsrc)/Test/Event.daml
+	$(damlc) test --junit $@ --files $(damlsrc)/Test/Event.daml
 
 
 # dar build

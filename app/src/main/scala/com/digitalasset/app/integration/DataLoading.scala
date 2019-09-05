@@ -6,7 +6,7 @@ package com.digitalasset.app.integration
 import java.util.Collections
 
 import com.daml.ledger.javaapi.data.Record.Field
-import com.daml.ledger.javaapi.data.{CreateCommand, DamlList, Date, Decimal, ExerciseCommand, Party, Record, Text, Value, Variant, Unit => DataUnit}
+import com.daml.ledger.javaapi.data.{CreateCommand, DamlEnum, DamlList, Decimal, ExerciseCommand, Party, Record, Text, Value, Unit => DataUnit}
 import com.digitalasset.app.LedgerClient
 import com.digitalasset.app.Schema.Schema
 import com.digitalasset.app.utils.Cdm
@@ -75,14 +75,14 @@ class DataLoading(party: String, client: LedgerClient, schema: Schema) {
       ).asJava)
 
     val cmd = new CreateCommand(client.getTemplateId("MasterAgreementProposal"), map)
-    client.sendCommands(party, List(cmd))
+    client.sendCommandsAndWaitForTransaction(party, List(cmd))
   }
 
   def loadHolidayCalendar(label: String, weekend: List[String], observer: List[String]): Unit = {
     val hcd =
       new Record(List(
         new Field("label", new Text(label)),
-        new Field("weekend", new DamlList(weekend.map(w => new Variant(w, DataUnit.getInstance).asInstanceOf[Value]).asJava)),
+        new Field("weekend", new DamlList(weekend.map(w => new DamlEnum(w).asInstanceOf[Value]).asJava)),
         new Field("holidays", new DamlList(Collections.emptyList[Value]()))
       ).asJava)
 
@@ -94,7 +94,7 @@ class DataLoading(party: String, client: LedgerClient, schema: Schema) {
       ).asJava)
 
     val cmd = new CreateCommand(client.getTemplateId("HolidayCalendarInstance"), hci)
-    client.sendCommands(party, List(cmd))
+    client.sendCommandsAndWaitForTransaction(party, List(cmd))
   }
 
   def loadCash(receiver: String, currency: String, amount: BigDecimal, account: String): Unit = {
@@ -109,7 +109,7 @@ class DataLoading(party: String, client: LedgerClient, schema: Schema) {
       ).asJava)
 
     val cmd = new CreateCommand(client.getTemplateId("CashTransferRequest"), arg)
-    client.sendCommands(party, List(cmd))
+    client.sendCommandsAndWaitForTransaction(party, List(cmd))
   }
 
   // Load event from json file

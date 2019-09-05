@@ -10,7 +10,7 @@ import java.util.{Optional, UUID}
 import com.daml.ledger.rxjava.components.{Bot, LedgerViewFlowable}
 import com.daml.ledger.rxjava.DamlLedgerClient
 import com.daml.ledger.rxjava.components.helpers.CommandsAndPendingSet
-import com.daml.ledger.javaapi.data.{Command, Event, FiltersByParty, Identifier, LedgerOffset, Record}
+import com.daml.ledger.javaapi.data.{Command, Event, FiltersByParty, Identifier, LedgerOffset, Record, Transaction}
 import com.digitalasset.daml_lf.DamlLf
 import com.digitalasset.daml_lf.DamlLf1
 import com.digitalasset.daml_lf.DamlLf1.DottedName
@@ -97,6 +97,21 @@ class LedgerClient(config: Config) {
       commands.asJava
     )
     ()
+  }
+
+  // Send a list of commands and wait for transaction
+  def sendCommandsAndWaitForTransaction(party: String, commands: List[Command]): Transaction = {
+    val currentTime = getTime()
+    val maxRecordTime = currentTime.plusSeconds(30)
+    client.getCommandClient.submitAndWaitForTransaction(
+      UUID.randomUUID().toString,
+      config.appId,
+      UUID.randomUUID().toString,
+      party,
+      currentTime,
+      maxRecordTime,
+      commands.asJava
+    ).blockingGet()
   }
 
   // Wire new bot

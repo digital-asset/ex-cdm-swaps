@@ -103,6 +103,7 @@ getImplicitStubType (Some stubType) hasExplInitStub hasExplFinalStub
   | (isInitialStub stubType) = if hasExplInitStub then None else Some stubType
   | (isFinalStub stubType) && hasExplInitStub = error "explicit initial stub implied, but final stub set"
   | (isFinalStub stubType) = if hasExplFinalStub then None else Some stubType
+  | otherwise = error "unknown combination"
 
 frequencyToPeriod : CalculationPeriodFrequency -> Period
 frequencyToPeriod frequency = do

@@ -6,6 +6,7 @@ package com.digitalasset.app
 import java.time.{Instant, LocalDate}
 
 import com.daml.ledger.javaapi.data.{CreateCommand, Party, Record}
+import com.digitalasset.app.integration.MarketSetup
 import com.typesafe.config.ConfigFactory
 
 import scala.collection.JavaConverters._
@@ -56,7 +57,7 @@ object Commands {
     Commands.loadMasterAgreements(directory + "/MasterAgreement.csv")
     Commands.loadHolidayCalendars(directory + "/HolidayCalendar.csv")
     Commands.loadCash(directory + "/Cash.csv")
-    parties.foreach(p => new bot.MarketSetup(p, client))
+    parties.foreach(p => new MarketSetup(p, client).run())
   }
 
   private def createAllocateWorfklow(party: String): Unit = {

@@ -40,5 +40,5 @@ assertOnOrAfterDateMsg msg date = do
 fetchAndArchive : Template a => ContractId a -> Update a
 fetchAndArchive cid = do
   c <- fetch cid
-  exercise cid Archive
+  archive cid
   return c

@@ -102,7 +102,7 @@ class Decoder(schema: Schema.Schema) {
       case "PrimContractId" => new ContractId(element.getAsString)
       case _ if typ.contains("Enum") =>
         val enumValue = typ + "_" + element.getAsString
-        new Variant(enumValue, Unit.getInstance)
+        new DamlEnum(enumValue)
       case "ZonedDateTime" =>
         val time = ZonedDateTime.parse(element.getAsString)
         new Record(List(
