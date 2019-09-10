@@ -1,0 +1,32 @@
+#
+# Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+services:
+  cdm-swaps-sandbox:
+    image: digitalasset/cdm-swaps-sandbox:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile-sandbox
+    ports:
+      - "6865:6865"
+  cdm-swaps-navigator:
+    image: digitalasset/cdm-swaps-navigator:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile-navigator
+    depends_on:
+      - "cdm-swaps-sandbox"
+    ports:
+      - "4000:4000"
+  cdm-swaps-bots:
+    image: digitalasset/cdm-swaps-bots:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile-bots
+    depends_on:
+      - "cdm-swaps-sandbox"
+    environment:
+      - INCLUDE_DEMO=true

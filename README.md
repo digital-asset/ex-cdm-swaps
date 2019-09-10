@@ -20,6 +20,7 @@ Fore more details, go to
 
 * [DAML SDK](https://daml.com/) for building and running DAML code
 * [sbt](https://www.scala-sbt.org/) for building and running automation
+* [Docker](https://www.docker.com/) for running the application (optional)
 
 
 ## Setting up the application
@@ -41,12 +42,15 @@ To set up the application:
 
 ## Starting the application
 
-To start the application, run each of the following commands in a separate shell:
+There are two options:
+
+### Option 1: Stand-Alone
+
+Run each of the following commands in a separate shell:
 
 * Start the sandbox by running:
 
       daml sandbox .daml/dist/CdmSwaps-1.0.0.dar
-
 
 * Start the navigator by running:
 
@@ -58,9 +62,16 @@ To start the application, run each of the following commands in a separate shell
 
       (cd app/; sbt "runMain com.digitalasset.app.REPL")
 
-
 * Start the automation by running:
 
       (cd app/; sbt "runMain com.digitalasset.app.Bots {includeDemo}")
 
    Set ``includeDemo`` to ``true`` or ``false`` depending on whether the application is run in [demo](docs/demo.md) mode.
+
+### Option 2: Docker
+
+* Start the sandbox, navigator, and automation by running:
+
+      docker-compose up --build
+
+  Set ``INCLUDE_DEMO`` to ``true`` (default) or ``false`` in ``docker-compose.yml`` depending on whether the application is run in [demo](docs/demo.md) mode.

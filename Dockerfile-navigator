@@ -1,0 +1,21 @@
+#
+# Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+FROM ubuntu:18.04
+
+ARG sdk_version=0.13.22
+
+WORKDIR /home/sdk
+
+COPY ui-backend.conf frontend-config.js /home/sdk/
+COPY scripts/install-daml.sh /home/sdk/
+
+RUN /bin/bash -c "apt-get update --no-show-upgraded &&  apt-get install wget openjdk-8-jdk -y"
+RUN chmod +x /home/sdk/install-daml.sh
+RUN /home/sdk/install-daml.sh ${sdk_version}
+
+EXPOSE 4000
+
+CMD ~/.daml/bin/daml navigator server
