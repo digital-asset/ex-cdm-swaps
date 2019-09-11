@@ -1,0 +1,14 @@
+#
+# Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+FROM mozilla/sbt:8u181_1.2.7
+
+WORKDIR /home/sdk
+
+COPY examples examples
+COPY app app
+RUN (cd app; sbt package)
+
+ENTRYPOINT (cd app/; sbt "runMain com.digitalasset.app.REPL ${LEDGER_HOST} ${LEDGER_PORT}")

@@ -1,0 +1,38 @@
+#
+# Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+services:
+  cdm-swaps-daml:
+    image: digitalasset/cdm-swaps-daml:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile-daml
+    ports:
+      - "4000:4000"
+      - "6865:6865"
+  cdm-swaps-bots:
+    image: digitalasset/cdm-swaps-bots:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile-bots
+    depends_on:
+      - "cdm-swaps-daml"
+    environment:
+      - LEDGER_HOST=cdm-swaps-daml
+      - LEDGER_PORT=6865
+      - INCLUDE_DEMO=true
+  cdm-swaps-repl:
+    stdin_open: true
+    tty: true
+    image: digitalasset/cdm-swaps-repl:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile-repl
+    depends_on:
+      - "cdm-swaps-daml"
+    environment:
+      - LEDGER_HOST=cdm-swaps-daml
+      - LEDGER_PORT=6865
