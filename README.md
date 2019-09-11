@@ -60,11 +60,11 @@ Run each of the following commands in a separate shell:
 
 * Start the customized REPL by running:
 
-      (cd app/; sbt "runMain com.digitalasset.app.REPL")
+      (cd app/; sbt "runMain com.digitalasset.app.REPL localhost 6865")
 
 * Start the automation by running:
 
-      (cd app/; sbt "runMain com.digitalasset.app.Bots {includeDemo}")
+      (cd app/; sbt "runMain com.digitalasset.app.Bots localhost 6865 {includeDemo}")
 
    Set ``includeDemo`` to ``true`` or ``false`` depending on whether the application is run in [demo](docs/demo.md) mode.
 
@@ -72,6 +72,12 @@ Run each of the following commands in a separate shell:
 
 * Start the sandbox, navigator, and automation by running:
 
-      docker-compose up --build
+      docker-compose up --build --scale cdm-swaps-repl=0
 
   Set ``INCLUDE_DEMO`` to ``true`` (default) or ``false`` in ``docker-compose.yml`` depending on whether the application is run in [demo](docs/demo.md) mode.
+
+* Start the customized REPL by running:
+
+      docker-compose run cdm-swaps-repl sh
+
+Note: If you run on Windows or MacOS, you may need to increase the memory limit of the Docker Engine in the preferences if you encounter a java.lang.OutOfMemoryError: GC overhead limit exceeded error.

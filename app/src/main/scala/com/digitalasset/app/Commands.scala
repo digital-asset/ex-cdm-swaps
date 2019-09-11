@@ -13,6 +13,9 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 
 object Commands {
+  var host = ""
+  var port = 0
+
   // Config
   private val config = ConfigFactory.load()
   private val parties = config.getStringList("parties").asScala.toList
@@ -20,13 +23,13 @@ object Commands {
   private val centralBanks = config.getStringList("centralBanks").asScala.toList
 
   // Clients
-  private val client = initClient()
-  private val schema = client.loadSchemas(config.getStringList("typeModules").asScala.toList)
-  private val party2dataLoading =
+  private lazy val client = initClient()
+  private lazy val schema = client.loadSchemas(config.getStringList("typeModules").asScala.toList)
+  private lazy val party2dataLoading =
     (dataProvider ++ centralBanks ++ parties)
       .map(p => (p, new integration.DataLoading(p, client, schema)))
       .toMap
-  private val party2derivedEvents =
+  private lazy val party2derivedEvents =
     parties
       .map(p => (p, new integration.DerivedEvents(p, client)))
       .toMap
@@ -35,15 +38,19 @@ object Commands {
     new LedgerClient(
       Config(
         config.getString("id"),
-        config.getString("platform.host"),
-        config.getInt("platform.port"),
+        host,
+        port,
         config.getInt("platform.maxRecordOffset"),
         config.getBoolean("platform.useStaticTime")
       )
     )
   }
 
-  def init(): Unit = {}
+  def init() : Unit = {
+    // Evaluate lazy variables
+    party2dataLoading.map{case (x, _) => x}
+    party2derivedEvents.map{case (x, _) => x}
+  }
 
   def getTime(): Instant = {
     client.getTime()
@@ -54,9 +61,9 @@ object Commands {
     if (time != "") client.setTime(Instant.parse(time))
     parties.foreach(createAllocateWorfklow)
     parties.foreach(createDeriveEventsWorkflow)
-    Commands.loadMasterAgreements(directory + "/MasterAgreement.csv")
-    Commands.loadHolidayCalendars(directory + "/HolidayCalendar.csv")
-    Commands.loadCash(directory + "/Cash.csv")
+    loadMasterAgreements(directory + "/MasterAgreement.csv")
+    loadHolidayCalendars(directory + "/HolidayCalendar.csv")
+    loadCash(directory + "/Cash.csv")
     parties.foreach(p => new MarketSetup(p, client).run())
   }
 
