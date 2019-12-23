@@ -6,8 +6,6 @@ jobs:
   application:
     docker:
       - image: mozilla/sbt:latest
-    environment:
-      - MAKEFLAGS: "-i"
     steps:
       - checkout
       - run:
