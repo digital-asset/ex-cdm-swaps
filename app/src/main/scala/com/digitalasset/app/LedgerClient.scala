@@ -11,9 +11,9 @@ import com.daml.ledger.rxjava.components.{Bot, LedgerViewFlowable}
 import com.daml.ledger.rxjava.DamlLedgerClient
 import com.daml.ledger.rxjava.components.helpers.CommandsAndPendingSet
 import com.daml.ledger.javaapi.data.{Command, Event, FiltersByParty, Identifier, LedgerOffset, Record, Transaction}
-import com.digitalasset.daml_lf.DamlLf
-import com.digitalasset.daml_lf.DamlLf1
-import com.digitalasset.daml_lf.DamlLf1.DottedName
+import com.digitalasset.daml_lf_dev.DamlLf
+import com.digitalasset.daml_lf_dev.DamlLf1
+import com.digitalasset.daml_lf_dev.DamlLf1.DottedName
 import com.digitalasset.ledger.api.v1.PackageServiceOuterClass.{GetPackageRequest, ListPackagesRequest}
 import com.google.protobuf.{CodedInputStream, Timestamp}
 import io.grpc.ManagedChannelBuilder
@@ -39,7 +39,7 @@ class LedgerClient(config: Config) {
   private val templateName2id = loadTemplates()
 
   // Time client
-  private val channel = ManagedChannelBuilder.forAddress(config.hostIp, config.hostPort).usePlaintext.build
+  private val channel = ManagedChannelBuilder.forAddress(config.hostIp, config.hostPort).build()
   private val timeClient = if (config.useStaticTime) TimeServiceGrpc.newBlockingStub(channel) else null
   private val ledgerId = client.getLedgerId
 

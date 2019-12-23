@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-ARG sdk_version=0.13.22
+ARG sdk_version=0.13.41
 
 FROM digitalasset/daml-sdk:${sdk_version}
 WORKDIR /home/sdk
