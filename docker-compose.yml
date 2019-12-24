@@ -5,23 +5,34 @@
 
 version: '2'
 services:
-  cdm-swaps-daml:
-    image: digitalasset/cdm-swaps-daml:0.0.1
+  cdm-swaps-sandbox:
+    image: digitalasset/cdm-swaps-sandbox:0.0.1
     build:
       context: .
-      dockerfile: Dockerfile-daml
+      dockerfile: Dockerfile-sandbox
+    ports:
+      - "6865:6865"
+  cdm-swaps-navigator:
+    image: digitalasset/cdm-swaps-navigator:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile-navigator
+    environment:
+      - LEDGER_HOST=cdm-swaps-sandbox
+      - LEDGER_PORT=6865
+    depends_on:
+      - "cdm-swaps-sandbox"
     ports:
       - "4000:4000"
-      - "6865:6865"
   cdm-swaps-bots:
     image: digitalasset/cdm-swaps-bots:0.0.1
     build:
       context: .
       dockerfile: Dockerfile-bots
     depends_on:
-      - "cdm-swaps-daml"
+      - "cdm-swaps-sandbox"
     environment:
-      - LEDGER_HOST=cdm-swaps-daml
+      - LEDGER_HOST=cdm-swaps-sandbox
       - LEDGER_PORT=6865
       - INCLUDE_DEMO=true
   cdm-swaps-repl:
@@ -32,7 +43,7 @@ services:
       context: .
       dockerfile: Dockerfile-repl
     depends_on:
-      - "cdm-swaps-daml"
+      - "cdm-swaps-sandbox"
     environment:
-      - LEDGER_HOST=cdm-swaps-daml
+      - LEDGER_HOST=cdm-swaps-sandbox
       - LEDGER_PORT=6865
