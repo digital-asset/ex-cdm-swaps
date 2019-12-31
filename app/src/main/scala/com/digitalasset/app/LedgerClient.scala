@@ -169,6 +169,8 @@ class LedgerClient(config: Config) {
 
   // Get all package
   private def getPackages(): Map[String, DamlLf1.Package] = {
+    import scala.language.existentials
+
     // Build Channel
     val cb = ManagedChannelBuilder.forAddress(config.hostIp, config.hostPort)
     cb.usePlaintext
