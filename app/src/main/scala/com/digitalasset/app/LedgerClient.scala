@@ -5,8 +5,7 @@ package com.digitalasset.app
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
-import java.util.{Optional, UUID}
-
+import java.util.{Optional, UUID, function}
 import com.daml.ledger.rxjava.components.{Bot, LedgerViewFlowable}
 import com.daml.ledger.rxjava.DamlLedgerClient
 import com.daml.ledger.rxjava.components.helpers.CommandsAndPendingSet
@@ -19,7 +18,6 @@ import com.google.protobuf.{CodedInputStream, Timestamp}
 import io.grpc.ManagedChannelBuilder
 import com.digitalasset.ledger.api.v1.PackageServiceGrpc
 import io.reactivex.Flowable
-
 import scala.collection.JavaConverters._
 import com.digitalasset.ledger.api.v1.testing.TimeServiceGrpc
 import com.digitalasset.ledger.api.v1.testing.TimeServiceOuterClass.{GetTimeRequest, SetTimeRequest}
@@ -33,7 +31,7 @@ case class Config(
 )
 
 class LedgerClient(config: Config) {
-  private val client = DamlLedgerClient.forHostWithLedgerIdDiscovery(config.hostIp, config.hostPort, Optional.empty())
+  private val client = DamlLedgerClient.newBuilder(config.hostIp, config.hostPort).build()
   client.connect()
   private val templateName2id = loadTemplates()
 
@@ -115,9 +113,8 @@ class LedgerClient(config: Config) {
 
   // Wire new bot
   def wireBot(transactionFilter: FiltersByParty, run: LedgerViewFlowable.LedgerView[Record] => Flowable[CommandsAndPendingSet]): Unit = {
-    def runImpl(ledgerView: LedgerViewFlowable.LedgerView[Record]): Flowable[CommandsAndPendingSet] = {
-      run(ledgerView)
-    }
+    val runImpl: function.Function[LedgerViewFlowable.LedgerView[Record], Flowable[CommandsAndPendingSet]] =
+      view => run(view)
 
     Bot.wire(config.appId, client, transactionFilter, runImpl, x => x.getCreateArguments)
   }
@@ -146,9 +143,9 @@ class LedgerClient(config: Config) {
         lfPackage
           .getModulesList.asScala
           .flatMap(m => {
-            val moduleName = m.getName.getSegmentsList.asScala.reduce((l, r) => l + "." + r)
+            val moduleName = m.getNameDname.getSegmentsList.asScala.reduce((l, r) => l + "." + r)
             m.getTemplatesList.asScala.map(t => {
-              val templateName = t.getTycon.getSegments(0)
+              val templateName = t.getTyconDname.getSegments(0)
               (templateName, new Identifier(packageId, moduleName, templateName))
             })
           })
@@ -219,11 +216,11 @@ object Schema {
 
   // Map daml lf types to a simple schema (required to decode jsons)
   def buildSchema(moduleName: String, lfPackage: DamlLf1.Package): Option[Schema] = {
-    val module = lfPackage.getModulesList.asScala.toList.find(x => getSegmentName(x.getName) == moduleName)
+    val module = lfPackage.getModulesList.asScala.toList.find(x => getSegmentName(x.getNameDname) == moduleName)
     module.map { m =>
       m.getDataTypesList.asScala.toList.map { dataType =>
-        val name = getSegmentName(dataType.getName)
-        val fields = dataType.getRecord.getFieldsList.asScala.toList.map(f => mapType(f.getField, f.getType))
+        val name = getSegmentName(dataType.getNameDname)
+        val fields = dataType.getRecord.getFieldsList.asScala.toList.map(f => mapType(f.getFieldStr, f.getType))
         (name, fields)
       }.toMap
     }
@@ -250,7 +247,7 @@ object Schema {
         else throw new NotImplementedError("Nested optionals or lists not supported.")
       case "UNIT"        =>
         if (damlLfType.getCon.getArgsCount > 0) {
-          val t = getSegmentName(damlLfType.getCon.getTycon.getName)
+          val t = getSegmentName(damlLfType.getCon.getTycon.getNameDname)
           t match {
             case "ReferenceWithMeta"      =>
               val subType = mapType(name, damlLfType.getCon.getArgs(0))
@@ -267,7 +264,7 @@ object Schema {
             case _                        => throw new NotImplementedError("Types with arguments not supported.")
           }
         }
-        else Schema.Field(name, Cardinality.ONEOF, getSegmentName(damlLfType.getCon.getTycon.getName), false, false)
+        else Schema.Field(name, Cardinality.ONEOF, getSegmentName(damlLfType.getCon.getTycon.getNameDname), false, false)
       case other         => throw new Exception("PrimType " + other + " not supported.")
     }
   }
