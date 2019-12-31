@@ -14,8 +14,15 @@ jobs:
           name: Install make
           command: (apt-get update || apt-get update) && apt-get install make
       - run:
+          name: Install jq
+          command: (apt-get update -y || apt-get update -y) && apt-get install -y jq          
+      - run:
           name: Build Application
           command: make build-app
+      - run:
+          name: Run Blackduck Detect
+          command: |
+            (cd app && bash <(curl -s https://raw.githubusercontent.com/DACH-NY/security-blackduck/master/synopsys-detect) ci-build digitalasset_ex-cdm-swaps master --logging.level.com.synopsys.integration=DEBUG --detect.notices.report=true --detect.report.timeout=600)
   daml:
     docker:
       - image: circleci/openjdk:8-jdk
@@ -49,5 +56,6 @@ jobs:
 workflows:
   Build and test:
     jobs:
-      - application
       - daml
+      - application:
+            context: blackduck
