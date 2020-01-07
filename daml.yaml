@@ -1,4 +1,4 @@
-sdk-version: 0.13.22
+sdk-version: 0.13.41
 name: CdmSwaps
 version: 1.0.0
 source: daml/Main.daml

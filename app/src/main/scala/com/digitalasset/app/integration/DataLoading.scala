@@ -8,7 +8,7 @@ import java.util.Collections
 import com.daml.ledger.javaapi.data.Record.Field
 import com.daml.ledger.javaapi.data.{CreateCommand, DamlEnum, DamlList, Decimal, ExerciseCommand, Party, Record, Text, Value, Unit => DataUnit}
 import com.digitalasset.app.LedgerClient
-import com.digitalasset.app.Schema.Schema
+import com.digitalasset.app.SchemaBuilder.Schema
 import com.digitalasset.app.utils.Cdm
 import com.digitalasset.app.utils.Json.JsonBuilder
 import com.digitalasset.app.utils.Record._

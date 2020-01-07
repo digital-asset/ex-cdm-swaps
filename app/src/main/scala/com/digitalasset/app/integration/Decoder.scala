@@ -9,12 +9,12 @@ import java.util.Collections
 
 import com.daml.ledger.javaapi.data._
 import com.daml.ledger.javaapi.data.Record.Field
-import com.digitalasset.app.Schema
+import com.digitalasset.app.SchemaBuilder
 import com.google.gson.{JsonElement, JsonObject}
 
 import scala.collection.JavaConverters._
 
-class Decoder(schema: Schema.Schema) {
+class Decoder(schema: SchemaBuilder.Schema) {
   def decode(json: JsonObject, targetType: String): Record = {
     val fields =
       schema.get(targetType) match {
@@ -34,19 +34,19 @@ class Decoder(schema: Schema.Schema) {
     else None
   }
 
-  private def decodeOptValue(element: Option[JsonElement], field: Schema.Field): Value = {
+  private def decodeOptValue(element: Option[JsonElement], field: SchemaBuilder.Field): Value = {
     try {
       element match {
-        case None if field.cardinality == Schema.Cardinality.OPTIONAL =>
+        case None if field.cardinality == SchemaBuilder.Cardinality.OPTIONAL =>
           new DamlOptional(java.util.Optional.empty())
 
-        case Some(e) if field.cardinality == Schema.Cardinality.OPTIONAL =>
+        case Some(e) if field.cardinality == SchemaBuilder.Cardinality.OPTIONAL =>
           new DamlOptional(java.util.Optional.of(decodeValueWithMeta(e, field)))
 
-        case None if field.cardinality == Schema.Cardinality.LISTOF =>
+        case None if field.cardinality == SchemaBuilder.Cardinality.LISTOF =>
           new DamlList(Collections.emptyList[Value]())
 
-        case Some(e) if field.cardinality == Schema.Cardinality.LISTOF =>
+        case Some(e) if field.cardinality == SchemaBuilder.Cardinality.LISTOF =>
           new DamlList(e.getAsJsonArray.iterator.asScala.toList.map(decodeValueWithMeta(_, field)).asJava)
 
         case Some(e) => decodeValueWithMeta(e, field)
@@ -58,7 +58,7 @@ class Decoder(schema: Schema.Schema) {
     }
   }
 
-  private def decodeValueWithMeta(element: JsonElement, field: Schema.Field): Value = {
+  private def decodeValueWithMeta(element: JsonElement, field: SchemaBuilder.Field): Value = {
     if (field.withReference) {
       val reference = getJsonElement("reference", element.getAsJsonObject).get
       new Record(List(
@@ -90,6 +90,7 @@ class Decoder(schema: Schema.Schema) {
     typ match {
       case "PrimInt64" => new Int64(element.getAsInt)
       case "PrimDecimal" => new Decimal(element.getAsBigDecimal)
+      case "PrimNumeric" => new Numeric(element.getAsBigDecimal)
       case "PrimText" => new Text(element.getAsString)
       case "PrimBool" => new Bool(element.getAsBoolean)
       case "PrimDate" =>
