@@ -80,4 +80,4 @@ Run each of the following commands in a separate shell:
 
       docker-compose run cdm-swaps-repl sh
 
-Note: If you run on Windows or MacOS, you may need to increase the memory limit of the Docker Engine in the preferences if you encounter a java.lang.OutOfMemoryError: GC overhead limit exceeded error.
+Note: Running the app via Docker needs up to 16 GB of memory. If you run on Windows or MacOS, you may need to increase the memory limit of the Docker Engine in the preferences if you encounter a java.lang.OutOfMemoryError: GC overhead limit exceeded error.
