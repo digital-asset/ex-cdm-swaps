@@ -10,6 +10,7 @@ import Org.Isda.Cdm.EventSpecificationModule.Impl.Event
 import Org.Isda.Cdm.EventSpecificationModule.Impl.Identifier
 import Org.Isda.Cdm.EventSpecificationModule.Impl.Utils
 import Org.Isda.Cdm.EventSpecificationModule.Types.All
+import Prelude hiding (subtract)
 
 -- | Build Termination event
 buildTerminationEvent : TerminationSpec -> Event

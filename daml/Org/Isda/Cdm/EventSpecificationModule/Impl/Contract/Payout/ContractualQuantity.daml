@@ -9,6 +9,7 @@ module Org.Isda.Cdm.EventSpecificationModule.Impl.Contract.Payout.ContractualQua
   )
   where
 
+import Prelude hiding (subtract)
 import DA.Optional
 import Org.Isda.Cdm.EventSpecificationModule.Impl.Utils
 import Org.Isda.Cdm.EventSpecificationModule.Types.All

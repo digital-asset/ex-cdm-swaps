@@ -1,6 +1,6 @@
 <configuration>
 
-    <logger name="com.digitalasset.script.cdm"/>
+    <logger name="com.daml.script.cdm"/>
     <logger name="com.daml.ledger.rxjava" level="INFO" />
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">

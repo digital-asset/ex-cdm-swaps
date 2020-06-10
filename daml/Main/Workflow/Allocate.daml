@@ -4,6 +4,7 @@
 daml 1.2
 module Main.Workflow.Allocate where
 
+import Prelude hiding (partition)
 import DA.Action
 import Main.Market.Cash
 import Main.Types
@@ -22,7 +23,7 @@ template AllocateWorkflow
     signatory sig
 
     controller sig can
-      nonconsuming Trigger: AllocationResult
+      nonconsuming AllocateWorkflow_Trigger: AllocationResult
         with
           ctiCids  : [ContractId CashTransferInstruction]
           cashCids : [ContractId Cash]

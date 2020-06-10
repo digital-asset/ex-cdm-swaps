@@ -1,15 +1,15 @@
 // Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package com.digitalasset.app.integration
+package com.daml.app.integration
 
 import java.time.LocalDate
 
 import com.daml.ledger.javaapi.data.Record.Field
 import com.daml.ledger.javaapi.data._
-import com.digitalasset.app.{LedgerClient, utils}
-import com.digitalasset.app.utils.Cdm
-import com.digitalasset.app.utils.Record._
+import com.daml.app.{LedgerClient, utils}
+import com.daml.app.utils.Cdm
+import com.daml.app.utils.Record._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._

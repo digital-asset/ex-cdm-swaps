@@ -1,0 +1,49 @@
+module Main.Trigger.Cash where
+
+import Daml.Trigger
+import DA.Action (unless)
+import DA.Functor (void)
+import DA.Next.Map hiding (filter, null)
+import DA.Optional
+import Main.Workflow.Allocate
+import Main.Market.Cash
+
+cashTrigger : Trigger ()
+cashTrigger = Trigger
+  with
+    initialize = const ()
+    updateState = (\_ _ _ -> ())
+    rule = cashRule
+    registeredTemplates = RegisteredTemplates
+      [ registeredTemplate @AllocateWorkflow
+      , registeredTemplate @CashTransferInstruction
+      , registeredTemplate @Cash ]
+    heartbeat = None
+
+cashRule : Party -> ACS -> Time -> Map CommandId [Command] -> () -> TriggerA ()
+cashRule party acs t _ state = do
+  let
+    workflows = getContracts @AllocateWorkflow acs
+    ctis = getContracts @CashTransferInstruction acs
+    cashs = getContracts @Cash acs
+
+    ctiNeedsAllocation ((ctiCid, cti) : (ContractId CashTransferInstruction, CashTransferInstruction)) =
+      let
+        payerOpt = do
+          reference <- cti.d.cashTransfer.payerReceiver.payerPartyReference.reference
+          (.p) <$> find (\p -> p.id == reference) cti.ps
+      in case payerOpt of
+        Some r -> r == party && isNone cti.allocatedCashCid
+        None -> False
+
+    cashNotAllocated ((cashCid, cash) : (ContractId Cash, Cash)) =
+      not $ any (\cti -> (snd cti).allocatedCashCid == Some cashCid) ctis
+
+    ctiCids = map fst $ filter ctiNeedsAllocation ctis
+    cashCids = map fst $ filter cashNotAllocated cashs
+    pendings = map toAnyContractId ctiCids <> map toAnyContractId cashCids
+  case listToOptional workflows of
+    Some (wfCid, wf) -> do
+      let cmds = [ exerciseCmd wfCid AllocateWorkflow_Trigger with .. ]
+      unless (null cmds) do void $ emitCommands cmds pendings
+    None -> pure ()

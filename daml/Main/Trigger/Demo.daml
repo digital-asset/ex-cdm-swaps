@@ -1,0 +1,109 @@
+module Main.Trigger.Demo where
+
+import Daml.Trigger
+import DA.Action (unless)
+import DA.Date (toDateUTC)
+import DA.Foldable (minimum)
+import DA.Functor (void)
+import DA.Next.Map qualified as M
+import DA.Next.Set (fromList, toList, difference)
+import DA.Optional
+import DA.Text (isInfixOf)
+import Main.Event.Instance
+import Main.Event.Notification
+import Main.Event.Proposal
+import Main.Market.Contract
+import Main.MasterAgreement
+import Main.ReferenceData
+import Main.Types
+import Main.Workflow.DeriveEvents
+import Org.Isda.Cdm.Classes (Identifier)
+
+demoTrigger : Trigger ()
+demoTrigger = Trigger
+  with
+    initialize = const ()
+    updateState = (\_ _ _ -> ())
+    rule = demoRule
+    registeredTemplates = RegisteredTemplates
+      [ registeredTemplate @ContractInstance
+      , registeredTemplate @DerivedEvent
+      , registeredTemplate @EventProposal
+      , registeredTemplate @EventInstance
+      , registeredTemplate @EventNotification
+      , registeredTemplate @DerivedEvent
+      , registeredTemplate @MasterAgreementInstance ]
+    heartbeat = None
+
+demoRule : Party -> ACS -> Time -> M.Map CommandId [Command] -> () -> TriggerA ()
+demoRule party acs time _ state = do
+  let
+    cis = getContracts @ContractInstance acs
+    eds = getContracts @DerivedEvent acs
+    eps = getContracts @EventProposal acs
+    eis = getContracts @EventInstance acs
+    ens = getContracts @EventNotification acs
+    mas = getContracts @MasterAgreementInstance acs
+    hcis = getContracts @HolidayCalendarInstance acs
+    obs = getContracts @ObservationInstance acs
+    holidayCalendarCids = map fst hcis
+
+    contractIdt2eds = map (\(edCid, ed) -> (ed.contractIdentifier, filter (\(edCid2, ed2) -> ed2.contractIdentifier == ed.contractIdentifier) eds)) eds 
+    contractIdt2ci = filter (isSome . fst) $ map (\(ciCid, ci) -> (getIdentifierByParty party ci.ps ci.d.contractIdentifier, (ciCid, ci))) cis
+    date = toDateUTC time
+
+    acceptEventProposal ((epCid, ep) : (ContractId EventProposal, EventProposal)) =
+      let
+        allSigs = map (.p) ep.ps
+        existingSigs = ep.sigs
+        missingSigs = toList $ difference (fromList allSigs) (fromList existingSigs)
+        sigRequired = listToOptional missingSigs == Some party
+      in
+        if sigRequired then
+          Some ((exerciseCmd epCid EventProposal_Accept with exerciser = party), toAnyContractId epCid)
+        else
+          None
+
+    createNextEvent ((contractIdt, edsByIdt) : (Identifier, [(ContractId DerivedEvent, DerivedEvent)])) =
+      let
+        dates : [Date] = map (\(_, ed) -> ed.d.eventDate) edsByIdt
+        minDate = minimum dates
+      in do
+        (nextEdCid, nextEd) <- find (\(_, ed) -> ed.d.eventDate == minDate) edsByIdt
+        case find (\(cidtOpt, _) -> cidtOpt == Some contractIdt) contractIdt2ci of
+          Some (idtOpt, (ciCid, ci)) ->
+            let
+              [ p1, p2 ] = ci.ps
+            in do
+              (maCid, ma) <- find (\(_, m) -> (m.p1 == p1.p && m.p2 == p2.p) || (m.p2 == p1.p && m.p1 == p2.p)) mas
+              eventId <- getIdentifierByParty party ci.ps nextEd.d.eventIdentifier
+              if null eis && nextEd.d.eventDate <= date then
+                let
+                  obsDates = if nextEd.d.eventQualifier == Some "Reset" then [ nextEd.d.eventDate ] else []
+                  observationCids = map fst $ filter (\(oiCid, oi) -> oi.d.date `elem` obsDates) obs
+                  refData = RefData with ..
+                in Some ((exerciseCmd nextEdCid CreateEvent with ..), toAnyContractId nextEdCid)
+              else
+                None
+          None -> None
+  
+  let
+    (cmds1, pendings1) = unzip $ mapOptional acceptEventProposal eps
+    (cmds2, pendings2) = unzip $ mapOptional createNextEvent contractIdt2eds
+    cmds = cmds1 <> cmds2
+    pendings = pendings1 <> pendings2
+  unless (null cmds) do void $ emitCommands cmds pendings
+
+getIdentifierByParty : Party -> [PartyWithId] -> [Identifier] -> Optional Identifier
+getIdentifierByParty party partiesWithId idts =
+  case find (\pwi -> pwi.p == party) partiesWithId of
+    Some pId ->
+      let
+        findParty (idt : Identifier) =
+          let
+            res = do
+              issuerReference <- idt.issuerReference
+              isInfixOf pId.id <$> issuerReference.reference
+          in isSome res      
+      in find findParty idts
+    _ -> None

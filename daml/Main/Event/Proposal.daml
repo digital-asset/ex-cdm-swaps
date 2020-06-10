@@ -24,7 +24,7 @@ template EventProposal
     ensure checkParties ps d.party
 
     -- Accept event
-    choice Accept: Either (ContractId EventProposal) (ContractId EventInstance)
+    choice EventProposal_Accept: Either (ContractId EventProposal) (ContractId EventInstance)
       with
         exerciser: Party
       controller exerciser

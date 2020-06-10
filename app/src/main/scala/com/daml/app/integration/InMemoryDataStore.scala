@@ -1,13 +1,13 @@
 // Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package com.digitalasset.app.integration
+package com.daml.app.integration
 
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 import com.daml.ledger.javaapi.data.{ArchivedEvent, CreatedEvent, Event, Filter, FiltersByParty, InclusiveFilter, Record}
-import com.digitalasset.app.LedgerClient
+import com.daml.app.LedgerClient
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable

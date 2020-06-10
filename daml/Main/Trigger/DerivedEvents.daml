@@ -1,0 +1,55 @@
+module Main.Trigger.DerivedEvents where
+
+import Prelude hiding (lookup)
+import Daml.Trigger
+import DA.Action (unless)
+import DA.Functor (void)
+import DA.Next.Map (Map)
+import DA.Optional
+import DA.Text (isInfixOf)
+import Org.Isda.Cdm.Classes (Identifier)
+import Main.Market.Contract
+import Main.Types
+import Main.Workflow.DeriveEvents
+
+derivedEventTrigger : Trigger ()
+derivedEventTrigger = Trigger
+  with
+    initialize = const ()
+    updateState = (\_ _ _ -> ())
+    rule = derivedEventRule
+    registeredTemplates = RegisteredTemplates
+      [ registeredTemplate @ContractInstance
+      , registeredTemplate @DerivedEvent ]
+    heartbeat = None
+
+derivedEventRule : Party -> ACS -> Time -> Map CommandId [Command] -> () -> TriggerA ()
+derivedEventRule party acs time _ state = do
+  let
+    cis = getContracts @ContractInstance acs
+    eds = getContracts @DerivedEvent acs
+    
+    contractIdt2eds = map (\(edCid, ed) -> (ed.contractIdentifier, filter (\(edCid2, ed2) -> ed2.contractIdentifier == ed.contractIdentifier) eds)) eds 
+    ciCid2contractIdt = mapOptional (\(_, ci) -> getIdentifierByParty party ci.ps ci.d.contractIdentifier) cis
+
+    archiveIfNonexisting ((contractIdt, edsGrouped) : (Identifier, [(ContractId DerivedEvent, DerivedEvent)])) =
+      if contractIdt `notElem` ciCid2contractIdt then
+        map (\(edCid, _) -> (exerciseCmd edCid Archive, toAnyContractId edCid)) edsGrouped
+      else
+        []
+    (cmds, pendings) = unzip $ concatMap archiveIfNonexisting contractIdt2eds
+  unless (null cmds) do void $ emitCommands cmds pendings
+
+getIdentifierByParty : Party -> [PartyWithId] -> [Identifier] -> Optional Identifier
+getIdentifierByParty party partiesWithId idts =
+  case find (\pwi -> pwi.p == party) partiesWithId of
+    Some pId ->
+      let
+        findParty (idt : Identifier) =
+          let
+            res = do
+              issuerReference <- idt.issuerReference
+              isInfixOf pId.id <$> issuerReference.reference
+          in isSome res      
+      in find findParty idts
+    _ -> None

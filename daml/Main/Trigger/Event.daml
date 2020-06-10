@@ -1,0 +1,103 @@
+module Main.Trigger.Event where
+
+import Prelude hiding (lookup)
+import Daml.Trigger
+import DA.Action (unless)
+import DA.Date (toDateUTC)
+import DA.Functor (void)
+import DA.Next.Map (Map, fromList, fromListWith, lookup)
+import DA.Optional
+import Org.Isda.Cdm.Enums (TransferStatusEnum(..))
+import Org.Isda.Cdm.Classes (CashTransferComponent)
+import Main.Event.Instance
+import Main.Market.Cash
+import Main.Market.Contract
+
+eventTrigger : Trigger ()
+eventTrigger = Trigger
+  with
+    initialize = const ()
+    updateState = (\_ _ _ -> ())
+    rule = eventRule
+    registeredTemplates = RegisteredTemplates
+      [ registeredTemplate @EventInstance
+      , registeredTemplate @ContractInstance
+      , registeredTemplate @CashTransferInstruction ]
+    heartbeat = None
+
+eventRule : Party -> ACS -> Time -> Map CommandId [Command] -> () -> TriggerA ()
+eventRule party acs time _ state = do
+  let
+    eis = getContracts @EventInstance acs
+    cis = getContracts @ContractInstance acs
+    ctis = getContracts @CashTransferInstruction acs
+    allocatedCtis = filter (\(_, cti) -> isSome cti.allocatedCashCid) ctis
+
+    rk2ciCid = fromList $ map (\(ciCid, ci) -> (ci.d.rosettaKey, ciCid)) cis 
+    id2ctis = fromListWith (<>) $ map (\(ctiCid, cti) -> (cti.d.eventReference, [ (ctiCid, cti) ])) ctis 
+    date = toDateUTC time
+
+    matchesParty ((eiCid, ei) : (ContractId EventInstance, EventInstance)) =
+      listToOptional (map (.p) ei.ps) == Some party
+
+    eisForParty = filter matchesParty eis
+
+    isPending (ei : EventInstance) =
+      all (\t -> t.status == Some TransferStatusEnum_Pending) ei.d.primitive.transfer
+
+    collectCiCids (ei : EventInstance) = do
+      lineage <- ei.d.lineage
+      let
+        referencedContracts = mapOptional (.reference) lineage.contractReference
+      mapA (`lookup` rk2ciCid) referencedContracts
+
+    processEi ((eiCid, ei) : (ContractId EventInstance, EventInstance))
+      | isPending ei && ei.d.eventDate <= date
+      = Some ((exerciseCmd eiCid Instruct with exerciser = party), toAnyContractId eiCid)
+      | fromOptional ei.d.eventDate ei.d.effectiveDate <= date
+      =  let
+          eiCtis = fromOptional [] $ lookup ei.d.rosettaKey id2ctis
+          cashTransfersV = map (.cashTransfer) ei.d.primitive.transfer
+          ctiCidsOpt = collectCtiCids eiCtis cashTransfersV
+          ciCidsOpt = collectCiCids ei
+        in case (ctiCidsOpt, ciCidsOpt) of
+          (Some ctiCids, Some ciCids) ->
+            Some ((exerciseCmd eiCid Lifecycle with exerciser = party; ..), toAnyContractId eiCid)
+          _ -> None
+      | otherwise = None
+
+    (cmds, pendings) = unzip $ mapOptional processEi eis
+  unless (null cmds) do void $ emitCommands cmds pendings
+
+accumulateInner
+  : CashTransferComponent
+  -> Optional ([ContractId CashTransferInstruction], [(ContractId CashTransferInstruction, CashTransferInstruction)])
+  -> Optional ([ContractId CashTransferInstruction], [(ContractId CashTransferInstruction, CashTransferInstruction)])
+accumulateInner cashTransfer accInner =
+  case accInner of
+    Some (allocCidsMatchedInner, allocRestInner) ->
+      case partition (\(_, cti) -> cti.d.cashTransfer == cashTransfer) allocRestInner of
+        ([], _) -> None
+        (head :: tail, rest) -> Some((fst head :: allocCidsMatchedInner, tail <> rest))
+    None -> None
+
+accumulateOuter
+  : [CashTransferComponent]
+  -> Optional ([[ContractId CashTransferInstruction]], [(ContractId CashTransferInstruction, CashTransferInstruction)])
+  -> Optional ([[ContractId CashTransferInstruction]], [(ContractId CashTransferInstruction, CashTransferInstruction)])
+accumulateOuter cashTransfers accOuter =
+  case accOuter of
+    Some (allocCidsMatchedOuter, allocRestOuter) ->
+      let resInner = foldr accumulateInner (Some ([], allocRestOuter)) cashTransfers
+      in case resInner of
+        Some (allocCidsMatchedInner, allocRestInner) -> Some(allocCidsMatchedInner :: allocCidsMatchedOuter, allocRestInner)
+        None -> None
+    None -> None
+
+collectCtiCids
+  : [(ContractId CashTransferInstruction, CashTransferInstruction)]
+  -> [[CashTransferComponent]]
+  -> Optional [[ContractId CashTransferInstruction]]
+collectCtiCids ctis cashTransfersV =
+  let res = foldr accumulateOuter (Some ([], ctis)) cashTransfersV
+  in fmap fst res

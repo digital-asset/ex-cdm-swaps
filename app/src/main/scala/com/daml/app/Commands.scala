@@ -1,12 +1,12 @@
 // Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-package com.digitalasset.app
+package com.daml.app
 
 import java.time.{Instant, LocalDate}
 
 import com.daml.ledger.javaapi.data.{CreateCommand, Party, Record}
-import com.digitalasset.app.integration.MarketSetup
+import com.daml.app.integration.MarketSetup
 import com.typesafe.config.ConfigFactory
 
 import scala.collection.JavaConverters._

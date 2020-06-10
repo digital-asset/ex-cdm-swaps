@@ -21,7 +21,7 @@ template DeriveEventsWorkflow
     signatory sig
 
     controller sig can
-      nonconsuming Trigger: [ContractId DerivedEvent]
+      nonconsuming DeriveEventsWorkflow_Trigger: [ContractId DerivedEvent]
         with
           ciCid     : ContractId ContractInstance
           fromDate  : Optional Date

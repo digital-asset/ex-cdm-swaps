@@ -11,4 +11,4 @@ COPY examples examples
 COPY app app
 RUN (cd app; sbt package)
 
-ENTRYPOINT (cd app/; sbt "runMain com.digitalasset.app.REPL ${LEDGER_HOST} ${LEDGER_PORT}")
+ENTRYPOINT (cd app/; sbt "runMain com.daml.app.REPL ${LEDGER_HOST} ${LEDGER_PORT}")

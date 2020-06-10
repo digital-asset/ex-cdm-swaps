@@ -50,7 +50,7 @@ Run each of the following commands in a separate shell:
 
 * Start the sandbox by running:
 
-      daml sandbox .daml/dist/CdmSwaps-1.0.0.dar
+      daml sandbox-classic -s .daml/dist/CdmSwaps-1.0.0.dar
 
 * Start the navigator by running:
 
@@ -60,11 +60,11 @@ Run each of the following commands in a separate shell:
 
 * Start the customized REPL by running:
 
-      (cd app/; sbt "runMain com.digitalasset.app.REPL localhost 6865")
+      (cd app/; sbt "runMain com.daml.app.REPL localhost 6865")
 
 * Start the automation by running:
 
-      (cd app/; sbt "runMain com.digitalasset.app.Bots localhost 6865 {includeDemo}")
+      (cd app/; sbt "runMain com.daml.app.Bots localhost 6865 {includeDemo}")
 
    Set ``includeDemo`` to ``true`` or ``false`` depending on whether the application is run in [demo](docs/demo.md) mode.
 
