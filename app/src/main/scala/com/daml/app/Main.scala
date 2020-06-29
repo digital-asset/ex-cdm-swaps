@@ -25,38 +25,6 @@ object REPL {
   }
 }
 
-object Bots {
-  def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load()
-    val parties = config.getStringList("parties").asScala.toList
-
-    if (args.length != 3) throw new Exception("arguments 'host port includeDemo' required")
-    val host = args(0).toString
-    val port = args(1).toInt
-    val includeDemo = args(2).toBoolean
-
-    val demoEventExclusionList = config.getStringList("bot.demoEventExclusionList").asScala.toList
-
-    val client =
-      new LedgerClient(
-        Config(
-          config.getString("id"),
-          host,
-          port,
-          config.getInt("platform.maxRecordOffset"),
-          config.getBoolean("platform.useStaticTime")
-        )
-      )
-
-    parties.foreach(p => new bot.DerivedEvents(p, client))
-    parties.foreach(p => new bot.Event(p, client))
-    parties.foreach(p => new bot.Cash(p, client))
-    if (includeDemo) parties.foreach(p => new bot.Demo(p, client, demoEventExclusionList))
-
-    while(true) {Thread.sleep(10000)}
-  }
-}
-
 // The REPL App can't be debugged directly
 object Debug extends App {
   val t0 = System.nanoTime()
