@@ -134,18 +134,18 @@ class LedgerClient(config: Config) {
 
     // Get all templates
     packages.flatMap {
-      case (packageId, lfPackage) =>
+      case (packageId, lfPackage) => {
+        val decoder = NameDecoder(lfPackage)
         lfPackage
           .getModulesList.asScala
           .flatMap(m => {
-            // NOTE: Getting one odd module that doesn't have a name at all (and no templates)
-            val moduleName = if (m.getNameDname.getSegmentsList.size() == 0) "" else m.getNameDname.getSegmentsList.asScala.reduce((l, r) => l + "." + r)
+            val modName = decoder.getName(m.getNameDname, m.getNameInternedDname)
             m.getTemplatesList.asScala.map(t => {
-              // NOTE: This is where it currently falls over, Dname is empty
-              val templateName = t.getTyconDname.getSegments(0)
-              (templateName, new Identifier(packageId, moduleName, templateName))
+              val templateName = decoder.getName(t.getTyconDname, t.getTyconInternedDname)
+              (templateName, new Identifier(packageId, modName, templateName))
             })
           })
+      }
     }
   }
 
@@ -194,6 +194,22 @@ class LedgerClient(config: Config) {
 
   }).toMap
   }
+
+  private def getName(internedDotted: Seq[DamlLf1.InternedDottedName],
+    internedStrings: Seq[String], dname: DamlLf1.DottedName, n: Int) = {
+    if (dname.getSegmentsList.size > 0) {
+      dname.getSegmentsList.asScala.mkString(".")
+    } else {
+      internedName(internedDotted, internedStrings, n)
+    }
+  }
+
+  private def internedName(
+      internedDotted: Seq[DamlLf1.InternedDottedName],
+      internedStrings: Seq[String],
+      n: Int): String = {
+    internedDotted(n).getSegmentsInternedStrList.asScala.map(i => internedStrings(i)).mkString(".")
+  }
 }
 
 object Schema {
@@ -215,20 +231,21 @@ object Schema {
 
   // Map daml lf types to a simple schema (required to decode jsons)
   def buildSchema(moduleName: String, lfPackage: DamlLf1.Package): Option[Schema] = {
-    val module = lfPackage.getModulesList.asScala.toList.find(x => getSegmentName(x.getNameDname) == moduleName)
+    val decoder = NameDecoder(lfPackage)
+    val module = lfPackage.getModulesList.asScala.toList.find(x => decoder.getName(x.getNameDname, x.getNameInternedDname) == moduleName)
     module.map { m =>
       m.getDataTypesList.asScala.toList.map{dataType =>
-        val name = getSegmentName(dataType.getNameDname)
-        val fields = dataType.getRecord.getFieldsList.asScala.toList.map(f => mapType(f.getFieldStr, f.getType))
+        val name = decoder.getName(dataType.getNameDname, dataType.getNameInternedDname)
+        val fields = dataType.getRecord.getFieldsList.asScala.toList.map(f => mapType(decoder, f.getFieldStr, f.getType))
         (name, fields)
       }.toMap
     }
   }
 
-  private def mapType(name: String, damlLfType: DamlLf1.Type): Schema.Field = {
+  private def mapType(decoder: NameDecoder, name: String, damlLfType: DamlLf1.Type): Schema.Field = {
     damlLfType.getPrim.getPrim.getValueDescriptor.getName match {
       case "INT64"        => Schema.Field(name, Cardinality.ONEOF, "PrimInt64", false, false)
-      case "DECIMAL"      => Schema.Field(name, Cardinality.ONEOF, "PrimDecimal", false, false)
+      case "NUMERIC"      => Schema.Field(name, Cardinality.ONEOF, "PrimNumeric", false, false)
       case "TEXT"         => Schema.Field(name, Cardinality.ONEOF, "PrimText", false, false)
       case "BOOL"         => Schema.Field(name, Cardinality.ONEOF, "PrimBool", false, false)
       case "DATE"         => Schema.Field(name, Cardinality.ONEOF, "PrimDate", false, false)
@@ -237,39 +254,52 @@ object Schema {
       case "CONTRACT_ID"  => Schema.Field(name, Cardinality.ONEOF, "PrimContractId", false, false)
       case "ARROW"        => Schema.Field(name, Cardinality.ONEOF, "PrimArrow", false, false)
       case "OPTIONAL"     =>
-        val subType = mapType(name, damlLfType.getPrim.getArgsList.get(0))
+        val subType = mapType(decoder, name, damlLfType.getPrim.getArgsList.get(0))
         if (subType.cardinality == Cardinality.ONEOF) subType.copy(cardinality = Cardinality.OPTIONAL)
         else throw new NotImplementedError("Nested optionals or lists not supported.")
       case "LIST"         =>
-        val subType = mapType(name, damlLfType.getPrim.getArgsList.get(0))
+        val subType = mapType(decoder, name, damlLfType.getPrim.getArgsList.get(0))
         if (subType.cardinality == Cardinality.ONEOF) subType.copy(cardinality = Cardinality.LISTOF)
         else throw new NotImplementedError("Nested optionals or lists not supported.")
       case "UNIT"         =>
         if (damlLfType.getCon.getArgsCount > 0) {
-          val t = getSegmentName(damlLfType.getCon.getTycon.getNameDname)
+          val t = decoder.getName(damlLfType.getCon.getTycon.getNameDname, damlLfType.getCon.getTycon.getNameInternedDname)
           t match {
             case "ReferenceWithMeta" =>
-              val subType = mapType(name, damlLfType.getCon.getArgs(0))
+              val subType = mapType(decoder, name, damlLfType.getCon.getArgs(0))
               if (subType.cardinality == Cardinality.ONEOF) subType.copy(withReference = true)
               else throw new NotImplementedError("Nested FieldWithMeta types not supported.")
             case "BasicReferenceWithMeta" =>
-              val subType = mapType(name, damlLfType.getCon.getArgs(0))
+              val subType = mapType(decoder, name, damlLfType.getCon.getArgs(0))
               if (subType.cardinality == Cardinality.ONEOF) subType.copy(withReference = true)
               else throw new NotImplementedError("Nested FieldWithMeta types not supported.")
             case "FieldWithMeta" =>
-              val subType = mapType(name, damlLfType.getCon.getArgs(0))
+              val subType = mapType(decoder, name, damlLfType.getCon.getArgs(0))
               if (subType.cardinality == Cardinality.ONEOF) subType.copy(withMeta = true)
               else throw new NotImplementedError("Nested FieldWithMeta types not supported.")
             case _ => throw new NotImplementedError("Types with arguments not supported.")
           }
         }
-        else Schema.Field(name, Cardinality.ONEOF, getSegmentName(damlLfType.getCon.getTycon.getNameDname), false, false)
+        else Schema.Field(name, Cardinality.ONEOF, decoder.getName(damlLfType.getCon.getTycon.getNameDname, damlLfType.getCon.getTycon.getNameInternedDname), false, false)
       case other          => throw new Exception("PrimType " + other + " not supported.")
     }
   }
+}
 
-  private def getSegmentName(name: DottedName): String = {
-    val segments = 1 to name.getSegmentsCount map(i => name.getSegments(i-1))
-    segments.mkString(".")
+case class NameDecoder(pkg: DamlLf1.Package) {
+  val internedDotted = pkg.getInternedDottedNamesList.asScala
+  val internedStrings = pkg.getInternedStringsList.asScala
+
+  def getName(dname: DamlLf1.DottedName, n: Int) = {
+    if (dname.getSegmentsList.size > 0) {
+      dname.getSegmentsList.asScala.mkString(".")
+    } else {
+      internedName(n)
+    }
+  }
+
+  private def internedName(
+      n: Int): String = {
+    internedDotted(n).getSegmentsInternedStrList.asScala.map(i => internedStrings(i)).mkString(".")
   }
 }

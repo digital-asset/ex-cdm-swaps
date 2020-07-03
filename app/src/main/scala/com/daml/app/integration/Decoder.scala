@@ -89,7 +89,7 @@ class Decoder(schema: Schema.Schema) {
   private def decodeValue(element: JsonElement, typ: String): Value = {
     typ match {
       case "PrimInt64" => new Int64(element.getAsInt)
-      case "PrimDecimal" => new Decimal(element.getAsBigDecimal)
+      case "PrimNumeric" => new Decimal(element.getAsBigDecimal)
       case "PrimText" => new Text(element.getAsString)
       case "PrimBool" => new Bool(element.getAsBoolean)
       case "PrimDate" =>
