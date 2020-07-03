@@ -1,0 +1,106 @@
+#!/bin/bash
+
+function triggers() {
+  if [ "$1" == "" ]; then
+    echo "Invalid arguments: $@"
+    echo "Usage: triggers start|stop"
+    exit 1
+  fi
+
+  CMD=$1
+  shift
+
+  case $CMD in
+    start)
+      start "$@"
+      ;;
+    stop)
+      stop "$@"
+      ;;
+    upload_dar)
+      upload_dar "$@"
+      ;;
+    list)
+      list "$@"
+      ;;
+    status)
+      status "$@"
+      ;;
+    health)
+      health "$@"
+      ;;
+    *)
+      echo "trigger <command>"
+      echo "  commands are:"
+      echo "    start - start a trigger"
+      echo "    stop - stop a trigger"
+      echo "    upload_dar - upload a DAR"
+      echo "    list - list running triggers"
+      echo "    status - show trigger status"
+      echo "    health - show service health"
+      ;;
+  esac
+}
+
+function start() {
+  echo "Starting triggers..."
+  export DAR_FILE=.daml/dist/CdmSwaps-1.0.0.dar
+  export PACKAGE_ID=$(daml damlc inspect-dar $DAR_FILE --json | jq -r '.main_package_id')
+
+  trigger start CCP-P01 Main.Trigger.Event:eventTrigger
+  trigger start DEALER-D01 Main.Trigger.Event:eventTrigger
+  trigger start DEALER-D02 Main.Trigger.Event:eventTrigger
+  trigger start DEALER-D03 Main.Trigger.Event:eventTrigger
+  trigger start CLIENT-C01 Main.Trigger.Event:eventTrigger
+  trigger start CLIENT-C02 Main.Trigger.Event:eventTrigger
+  trigger start CLIENT-C03 Main.Trigger.Event:eventTrigger
+  trigger start CLIENT-C04 Main.Trigger.Event:eventTrigger
+  trigger start CLIENT-C05 Main.Trigger.Event:eventTrigger
+
+  trigger start CCP-P01    Main.Trigger.DerivedEvents:derivedEventTrigger
+  trigger start DEALER-D01 Main.Trigger.DerivedEvents:derivedEventTrigger
+  trigger start DEALER-D02 Main.Trigger.DerivedEvents:derivedEventTrigger
+  trigger start DEALER-D03 Main.Trigger.DerivedEvents:derivedEventTrigger
+  trigger start CLIENT-C01 Main.Trigger.DerivedEvents:derivedEventTrigger
+  trigger start CLIENT-C02 Main.Trigger.DerivedEvents:derivedEventTrigger
+  trigger start CLIENT-C03 Main.Trigger.DerivedEvents:derivedEventTrigger
+  trigger start CLIENT-C04 Main.Trigger.DerivedEvents:derivedEventTrigger
+  trigger start CLIENT-C05 Main.Trigger.DerivedEvents:derivedEventTrigger
+
+  trigger start CCP-P01    Main.Trigger.Cash:cashTrigger
+  trigger start DEALER-D01 Main.Trigger.Cash:cashTrigger
+  trigger start DEALER-D02 Main.Trigger.Cash:cashTrigger
+  trigger start DEALER-D03 Main.Trigger.Cash:cashTrigger
+  trigger start CLIENT-C01 Main.Trigger.Cash:cashTrigger
+  trigger start CLIENT-C02 Main.Trigger.Cash:cashTrigger
+  trigger start CLIENT-C03 Main.Trigger.Cash:cashTrigger
+  trigger start CLIENT-C04 Main.Trigger.Cash:cashTrigger
+  trigger start CLIENT-C05 Main.Trigger.Cash:cashTrigger
+
+  trigger start CCP-P01    Main.Trigger.Demo:demoTrigger
+  trigger start DEALER-D01 Main.Trigger.Demo:demoTrigger
+  trigger start DEALER-D02 Main.Trigger.Demo:demoTrigger
+  trigger start DEALER-D03 Main.Trigger.Demo:demoTrigger
+  trigger start CLIENT-C01 Main.Trigger.Demo:demoTrigger
+  trigger start CLIENT-C02 Main.Trigger.Demo:demoTrigger
+  trigger start CLIENT-C03 Main.Trigger.Demo:demoTrigger
+  trigger start CLIENT-C04 Main.Trigger.Demo:demoTrigger
+  trigger start CLIENT-C05 Main.Trigger.Demo:demoTrigger
+  echo "Triggers started."
+}
+
+function stop() {
+  echo "Stopping triggers..."
+  trigger stop CCP-P01 all
+  trigger stop DEALER-D01 all
+  trigger stop DEALER-D02 all
+  trigger stop DEALER-D03 all
+  trigger stop CLIENT-C01 all
+  trigger stop CLIENT-C02 all
+  trigger stop CLIENT-C03 all
+  trigger stop CLIENT-C04 all
+  trigger stop CLIENT-C05 all
+  echo "Triggers stopped."
+}
+
+triggers "$@"

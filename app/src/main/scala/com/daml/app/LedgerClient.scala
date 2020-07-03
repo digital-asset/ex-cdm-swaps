@@ -138,8 +138,10 @@ class LedgerClient(config: Config) {
         lfPackage
           .getModulesList.asScala
           .flatMap(m => {
-            val moduleName = m.getNameDname.getSegmentsList.asScala.reduce((l, r) => l + "." + r)
+            // NOTE: Getting one odd module that doesn't have a name at all (and no templates)
+            val moduleName = if (m.getNameDname.getSegmentsList.size() == 0) "" else m.getNameDname.getSegmentsList.asScala.reduce((l, r) => l + "." + r)
             m.getTemplatesList.asScala.map(t => {
+              // NOTE: This is where it currently falls over, Dname is empty
               val templateName = t.getTyconDname.getSegments(0)
               (templateName, new Identifier(packageId, moduleName, templateName))
             })
